@@ -50,12 +50,31 @@ class FeatureState:
         self.history: dict[str, list[dict[str, Any]]] = defaultdict(list)
         self.encounters: dict[tuple[str, ...], list[tuple]] = defaultdict(list)
         self.observations = observations or []
+        self.applied_matches: list[Match] = []
 
     def apply(self, match: Match) -> None:
         assert match.home_goals is not None and match.away_goals is not None
-        self.elo.update(
-            match.home_team, match.away_team, match.season, match.home_goals, match.away_goals
+        late_result = bool(
+            self.applied_matches and match.kickoff < max(m.kickoff for m in self.applied_matches)
         )
+        self.applied_matches.append(match)
+        if late_result:
+            # A delayed publication changes the known history. Replay Elo in match
+            # order, while still excluding every result not yet available.
+            self.elo = Elo(**self.config["elo"])
+            for historical in sorted(self.applied_matches, key=lambda m: (m.kickoff, m.id)):
+                assert historical.home_goals is not None and historical.away_goals is not None
+                self.elo.update(
+                    historical.home_team,
+                    historical.away_team,
+                    historical.season,
+                    historical.home_goals,
+                    historical.away_goals,
+                )
+        else:
+            self.elo.update(
+                match.home_team, match.away_team, match.season, match.home_goals, match.away_goals
+            )
         for team, opponent, gf, ga, venue, stats, other in [
             (
                 match.home_team,

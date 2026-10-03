@@ -59,3 +59,18 @@ def test_empty_history_is_missing_not_invented():
     features = pipeline().transform([match()])
     assert np.isnan(features.home_xg_5.iloc[0])
     assert features.home_player_data_available.iloc[0] == 0
+
+
+def test_delayed_publication_replays_elo_in_match_order():
+    from datetime import timedelta
+
+    first, second, fixture = match(0, hg=2, ag=0), match(1, hg=0, ag=2), match(3)
+    first = first.model_copy(update={"available_at": second.available_at + timedelta(hours=1)})
+    config = Settings().load("features")
+    actual = FeaturePipeline(config).for_fixture([first, second], fixture)
+    chronological = Elo(**config["elo"])
+    for record in [first, second]:
+        chronological.update(
+            record.home_team, record.away_team, record.season, record.home_goals, record.away_goals
+        )
+    assert actual.home_elo.iloc[0] == pytest.approx(chronological.rating("A", fixture.season))

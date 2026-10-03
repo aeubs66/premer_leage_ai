@@ -49,7 +49,7 @@ def import_observations(path: Path):
 
 
 @app.command()
-def train(neural: bool = True, optimization: str = "FAST", tune: bool = True):
+def train(neural: bool | None = None, optimization: str | None = None, tune: bool = True):
     """Select and evaluate models chronologically; initialize a champion if absent."""
     from football_ai.training.trainer import train as fit
 
@@ -57,7 +57,7 @@ def train(neural: bool = True, optimization: str = "FAST", tune: bool = True):
 
 
 @app.command()
-def retrain(neural: bool = True, optimization: str = "FAST", tune: bool = True):
+def retrain(neural: bool | None = None, optimization: str | None = None, tune: bool = True):
     """Train a candidate and apply the independent-data champion comparison gate."""
     from football_ai.training.trainer import train as fit
 

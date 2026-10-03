@@ -108,9 +108,16 @@ def feature_frame(settings, records, version, observations):
     import hashlib
 
     config = settings.load("features")
+    implementation_hash = hashlib.sha256()
+    for source in sorted(settings.path("src/football_ai/features").glob("*.py")):
+        implementation_hash.update(source.read_bytes())
     identity = hashlib.sha256(
         json.dumps(
-            {"features": config, "observations": [o.model_dump(mode="json") for o in observations]},
+            {
+                "features": config,
+                "implementation_sha256": implementation_hash.hexdigest(),
+                "observations": [o.model_dump(mode="json") for o in observations],
+            },
             sort_keys=True,
         ).encode()
     ).hexdigest()[:16]
@@ -332,7 +339,7 @@ def train(settings: Settings, neural=None, optimization=None, retrain=False, tun
             for m, p in zip(test_matches, test_probabilities, strict=True)
         ]
     )
-    write_report(directory, report, rows)
+    directory.mkdir(parents=True, exist_ok=True)
     if diagnostic_model is not None:
         import matplotlib.pyplot as plt
 
@@ -357,6 +364,7 @@ def train(settings: Settings, neural=None, optimization=None, retrain=False, tun
         fig.tight_layout()
         fig.savefig(directory / "feature-importance.png", dpi=150)
         plt.close(fig)
+    write_report(directory, report, rows)
     pd.DataFrame(
         [
             {

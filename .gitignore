@@ -5,10 +5,10 @@ __pycache__/
 .ruff_cache/
 .mypy_cache/
 .env
-data/
-models/
-reports/
-mlruns/
+/data/
+/models/
+/reports/
+/mlruns/
 *.db
 *.db-*
 frontend/node_modules/

@@ -1,0 +1,11 @@
+version: prekickoff-v1
+windows: [3, 5, 10]
+ewm_alpha: 0.25
+head_to_head: true
+optional_statistics: [xg, possession, corners, fouls, shots, shots_on_target, yellow_cards, red_cards]
+elo:
+  initial: 1500
+  k: 20
+  home_advantage: 65
+  season_retention: 0.75
+  goal_margin: false

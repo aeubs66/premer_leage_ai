@@ -1,0 +1,15 @@
+seed: 42
+optimization: FAST
+tracking: true
+neural: true
+warmup_matches: 380
+validation_blocks: 6
+backtest_refit_days: 30
+tuning:
+  FAST: {trials: 10, timeout_seconds: 600}
+  NORMAL: {trials: 30, timeout_seconds: 1800}
+  DEEP: {trials: 100, timeout_seconds: 7200}
+profiles:
+  LIGHT: {threads: 2, neural_width: 32, neural_epochs: 60}
+  STANDARD: {threads: 4, neural_width: 64, neural_epochs: 120}
+  RESEARCH: {threads: 4, neural_width: 96, neural_epochs: 160}

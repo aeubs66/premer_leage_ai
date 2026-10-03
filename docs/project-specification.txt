@@ -1,0 +1,1663 @@
+Build a complete advanced AI/ML system for predicting English Premier League football matches.
+
+This is both:
+
+1. An advanced learning project for someone learning AI engineering.
+2. A genuinely strong football prediction system built with serious ML engineering practices.
+
+Do NOT simplify the project to beginner-level ML just because I am still learning.
+
+You may use advanced techniques when they are justified, but the codebase must be documented so I can study and understand it later.
+
+My current computer is a Windows laptop with approximately:
+
+- Intel Core i5 8th generation
+- no dedicated GPU
+- CPU training only
+
+Therefore:
+
+- everything must run locally on Windows
+- avoid architectures that require a GPU
+- optimize training for limited hardware
+- use efficient models and datasets
+- make expensive experimental models optional
+- do not sacrifice good architecture just because hardware is limited
+
+# MAIN GOAL
+
+Predict Premier League matches before kickoff.
+
+The main outputs are:
+
+- Home win probability
+- Draw probability
+- Away win probability
+- Predicted winner
+- Expected home goals
+- Expected away goals
+- Most likely exact scores
+- Probability distribution over plausible scores
+- Prediction confidence
+- Model disagreement
+- Explanation of important factors behind the prediction
+
+Example output:
+
+Arsenal vs Liverpool
+
+Home win: 46.2%
+Draw: 27.4%
+Away win: 26.4%
+
+Predicted result:
+Arsenal win
+
+Expected goals:
+Arsenal: 1.82
+Liverpool: 1.39
+
+Most likely scores:
+
+1-1: 11.2%
+2-1: 10.7%
+1-0: 9.8%
+2-0: 8.3%
+0-1: 7.6%
+
+Confidence:
+Moderate
+
+Model predictions:
+
+Elo:
+Home 44%
+Draw 28%
+Away 28%
+
+Poisson:
+Home 47%
+Draw 27%
+Away 26%
+
+XGBoost:
+Home 50%
+Draw 26%
+Away 24%
+
+Neural network:
+Home 45%
+Draw 29%
+Away 26%
+
+Ensemble:
+Home 46.2%
+Draw 27.4%
+Away 26.4%
+
+Never imply that a football prediction is certain.
+
+# DATA
+
+Use approximately the latest 5 completed/current Premier League seasons.
+
+Prefer reliable free APIs where practical.
+
+If a good free API is unavailable, rate limited, unreliable, or lacks sufficient history, support CSV datasets.
+
+Design the data layer so the source can be changed later without rewriting the ML system.
+
+Possible architecture:
+
+DataProvider interface
+
+implementations:
+
+- APIDataProvider
+- CSVDataProvider
+
+The project should allow me to choose the actual API/dataset later.
+
+Never hardcode the entire project around one vendor.
+
+Store the raw data locally after downloading so API requests do not need to be repeated unnecessarily.
+
+# DATA WE WANT
+
+Collect as much useful pre-match information as reasonably available.
+
+Team-level information:
+
+- match date
+- season
+- home team
+- away team
+- goals
+- result
+- shots
+- shots on target
+- possession
+- corners if available
+- fouls if available
+- cards
+- xG
+- xGA
+- expected points if available
+- clean sheets
+- home performance
+- away performance
+
+Player-level information when reliable data is available:
+
+- expected starting XI
+- confirmed starting XI when predicting close enough to kickoff
+- injuries
+- suspensions
+- unavailable players
+- player minutes
+- player form
+- player xG
+- player xA
+- goals
+- assists
+- goalkeeper performance
+- defensive contribution
+- important player absences
+
+Do not make the whole project dependent on player data because free player-level data may be incomplete.
+
+The system should still operate when some player information is missing.
+
+# ABSOLUTE RULE: NO DATA LEAKAGE
+
+Data leakage prevention is one of the most important parts of this project.
+
+When generating a feature for a historical game, pretend the system exists immediately before that game's kickoff.
+
+The model must NEVER know anything from:
+
+- the current game's final score
+- future matches
+- future player statistics
+- future league position
+- future Elo ratings
+- future season totals
+- final-season statistics
+- statistics calculated using the current game's outcome
+
+For rolling features:
+
+use values such as:
+
+shift(1)
+
+before:
+
+rolling(...)
+expanding(...)
+ewm(...)
+
+when appropriate.
+
+Write automated tests specifically designed to detect data leakage.
+
+Include a document:
+
+docs/data-leakage.md
+
+that explains common leakage mistakes in football ML.
+
+# FEATURE ENGINEERING
+
+Build a professional feature pipeline.
+
+Include useful features such as:
+
+## Team strength
+
+- Elo home rating
+- Elo away rating
+- Elo difference
+- attack strength
+- defensive strength
+- league-relative strength
+
+## Recent form
+
+Last:
+
+- 3 matches
+- 5 matches
+- 10 matches
+
+Calculate:
+
+- points per game
+- wins
+- draws
+- losses
+- goals scored
+- goals conceded
+- goal difference
+- xG
+- xGA
+- shots
+- shots on target
+- clean sheets
+
+Use exponentially weighted versions where useful so recent matches have more importance.
+
+## Home and away form
+
+Separate:
+
+home team's performance at home
+
+from:
+
+away team's performance away.
+
+Examples:
+
+home team:
+last 5 home games
+
+away team:
+last 5 away games
+
+## Expected goals
+
+Include when data exists:
+
+- rolling xG
+- rolling xGA
+- xG difference
+- home xG
+- away xG
+- expected goals trends
+
+## Schedule
+
+- rest days
+- matches played in last 7 days
+- matches played in last 14 days
+- fixture congestion
+
+If European/cup fixture information is reasonably available, allow it to contribute to fatigue features.
+
+## Season context
+
+- matches played
+- season progression
+- current points before the match
+- current goal difference before the match
+- current league position before the match
+
+League table features must be reconstructed chronologically.
+
+Never use the final table.
+
+## Head-to-head
+
+Head-to-head may be included but should not dominate predictions.
+
+Use recent historical encounters only.
+
+Evaluate whether removing head-to-head improves performance.
+
+## Player availability
+
+Where data allows:
+
+- number of unavailable players
+- missing minutes
+- missing attacking contribution
+- missing defensive contribution
+- missing goalkeeper
+- approximate squad-strength loss
+
+Do NOT assign arbitrary huge importance to famous players.
+
+Learn importance from historical data when possible.
+
+# MODEL ARCHITECTURE
+
+Build several independent models.
+
+Do NOT assume that a neural network is automatically the best model.
+
+Compare all models scientifically.
+
+# MODEL 0 — NAIVE BASELINES
+
+Create simple baselines.
+
+Examples:
+
+- always predict home win
+- league-frequency probabilities
+- previous-season strength
+- simple Elo-only probabilities
+
+These establish whether sophisticated models actually improve anything.
+
+# MODEL 1 — ELO
+
+Implement football Elo ratings from scratch.
+
+Support:
+
+- home advantage
+- opponent strength
+- match result
+- optional goal-margin adjustment
+- season transition handling
+- configurable K factor
+
+Update Elo ratings chronologically.
+
+Do not use external Elo libraries for the core implementation.
+
+This section should be educational because I am learning linear algebra and ML fundamentals.
+
+# MODEL 2 — POISSON / DIXON-COLES
+
+Build a statistical goal model.
+
+Estimate:
+
+- home attacking strength
+- away attacking strength
+- home defensive strength
+- away defensive strength
+- home advantage
+
+Predict:
+
+lambda_home
+
+lambda_away
+
+Then generate score probabilities:
+
+0-0
+1-0
+0-1
+1-1
+2-0
+0-2
+2-1
+1-2
+2-2
+etc.
+
+Support scores up to a sensible maximum such as 8 goals, with remaining probability handled correctly.
+
+Use a Dixon-Coles correction if empirical evaluation shows it improves low-scoring match modeling.
+
+Produce:
+
+- home win probability
+- draw probability
+- away win probability
+- exact score probabilities
+- expected goals
+
+Document the mathematics clearly.
+
+# MODEL 3 — GRADIENT BOOSTING
+
+Use XGBoost, LightGBM, or HistGradientBoosting.
+
+Prefer XGBoost if it performs well and runs acceptably on my laptop.
+
+Optimize for CPU.
+
+Predict:
+
+HOME
+DRAW
+AWAY
+
+as probabilities.
+
+Use probability outputs, not just class labels.
+
+# MODEL 4 — NEURAL NETWORK
+
+Use PyTorch.
+
+The neural network should only become part of the final ensemble if evaluation proves it adds useful predictive information.
+
+Build a CPU-friendly architecture.
+
+Possible inputs:
+
+numeric features
++
+team embeddings
++
+season context
++
+optional player/squad features
+
+Architecture example:
+
+numerical features
+        +
+home team embedding
+        +
+away team embedding
+        ↓
+fully connected layer
+        ↓
+batch normalization
+        ↓
+GELU/ReLU
+        ↓
+dropout
+        ↓
+fully connected layer
+        ↓
+softmax
+        ↓
+HOME / DRAW / AWAY
+
+Consider a multi-task network that also predicts:
+
+home goals
+away goals
+
+if this empirically improves representations.
+
+Do not make the network unnecessarily large.
+
+Prefer a small well-trained network over a giant network.
+
+Training may include:
+
+- AdamW
+- learning rate scheduling
+- early stopping
+- class weighting if justified
+- weight decay
+- dropout
+- gradient clipping when useful
+
+Document:
+
+- tensor shapes
+- matrix multiplication
+- weights
+- biases
+- activations
+- loss
+- backpropagation
+- embeddings
+
+in beginner-friendly language.
+
+# OPTIONAL ADVANCED MODELS
+
+Create an experimental framework for advanced techniques.
+
+Do NOT automatically include them in production.
+
+Potential experiments:
+
+- Bayesian models
+- temporal neural networks
+- attention
+- Transformers
+- Monte Carlo simulation
+- learned team embeddings
+- player embeddings
+- graph neural networks
+
+Only implement an advanced approach if:
+
+1. it is computationally realistic on CPU
+2. there is enough data
+3. there is a clear hypothesis for why it could help
+
+Never add complexity purely to make the project look advanced.
+
+# ENSEMBLE
+
+Create an ensemble using:
+
+- Elo
+- Poisson
+- gradient boosting
+- neural network if useful
+
+Do not automatically average probabilities.
+
+Test:
+
+- weighted averaging
+- validation-optimized weights
+- logistic stacking
+- meta-model stacking
+
+The meta-model must never train on predictions generated from data the base model trained on improperly.
+
+Use out-of-fold/time-aware predictions for stacking.
+
+The final ensemble should be selected using validation results.
+
+# PROBABILITY CALIBRATION
+
+Football prediction probabilities must be calibrated.
+
+Test calibration methods such as:
+
+- Platt/sigmoid calibration
+- isotonic regression
+- temperature scaling
+
+Calibration data must be separate from training data.
+
+Evaluate calibration using:
+
+- reliability diagrams
+- Brier score
+- log loss
+- expected calibration error
+
+If calibration worsens holdout performance, do not use it blindly.
+
+# TRAIN / VALIDATION / TEST
+
+NEVER use random splitting for the main evaluation.
+
+Use chronological splitting.
+
+For approximately five seasons:
+
+example concept:
+
+earliest seasons:
+training
+
+later period:
+validation
+
+newest season/period:
+final test
+
+The exact split should adapt to the available data.
+
+The final test set must remain untouched during:
+
+- feature decisions
+- model selection
+- hyperparameter tuning
+- ensemble weight selection
+- calibration selection
+
+# WALK-FORWARD BACKTESTING
+
+Implement realistic walk-forward backtesting.
+
+Example:
+
+train using everything available before date X
+
+predict next matches
+
+advance time
+
+update training data
+
+predict again
+
+This should simulate how the model would actually have behaved historically.
+
+Store every historical prediction.
+
+# EVALUATION
+
+Evaluate probabilities, not only winners.
+
+Primary metrics:
+
+- multiclass log loss
+- Brier score
+
+Secondary metrics:
+
+- accuracy
+- balanced accuracy if useful
+- confusion matrix
+- calibration error
+- top prediction confidence
+- score prediction metrics
+- expected-goals error
+
+For score prediction also calculate appropriate metrics such as:
+
+- MAE for home goals
+- MAE for away goals
+- Poisson/log likelihood where appropriate
+
+Compare:
+
+baseline
+Elo
+Poisson
+gradient boosting
+neural network
+ensemble
+
+Generate model comparison reports.
+
+# HYPERPARAMETER OPTIMIZATION
+
+Use Optuna.
+
+Tune models where useful.
+
+Examples:
+
+XGBoost:
+
+- max_depth
+- learning_rate
+- n_estimators
+- min_child_weight
+- subsample
+- colsample_bytree
+- regularization
+
+Neural network:
+
+- hidden layers
+- hidden width
+- dropout
+- learning rate
+- weight decay
+- embedding size
+
+Do not perform enormous search spaces because I have a CPU-only laptop.
+
+Provide:
+
+FAST
+NORMAL
+DEEP
+
+optimization profiles.
+
+Example:
+
+FAST:
+10 trials
+
+NORMAL:
+30 trials
+
+DEEP:
+100+ trials
+
+Allow me to control the profile in configuration.
+
+# EXPERIMENT TRACKING
+
+Use MLflow.
+
+Track:
+
+- experiment name
+- run ID
+- git commit
+- dataset version
+- feature version
+- parameters
+- validation metrics
+- test metrics
+- model artifact
+- date trained
+
+Run MLflow locally.
+
+Do not require a cloud service.
+
+# MODEL EXPLAINABILITY
+
+Provide explanations for predictions.
+
+Use:
+
+- feature importance
+- permutation importance
+- SHAP where practical
+- model-specific diagnostics
+
+Example explanation:
+
+Arsenal advantages:
+
++ higher Elo
++ stronger recent home xG
++ better shot quality
++ opponent defensive decline
+
+Liverpool advantages:
+
++ better away scoring form
++ stronger recent defensive performance
+
+Important:
+
+never present correlations/features as proven causes.
+
+Say:
+
+"Factors associated with this prediction"
+
+rather than:
+
+"This caused Arsenal to win."
+
+# UNCERTAINTY AND MODEL DISAGREEMENT
+
+Show each model's output.
+
+Example:
+
+Elo:
+43 / 29 / 28
+
+Poisson:
+47 / 28 / 25
+
+XGBoost:
+52 / 25 / 23
+
+Neural Network:
+44 / 30 / 26
+
+Ensemble:
+47 / 28 / 25
+
+Calculate a disagreement indicator.
+
+Example:
+
+LOW disagreement
+MEDIUM disagreement
+HIGH disagreement
+
+Do not create an arbitrary fake confidence score.
+
+Confidence should be based on meaningful quantities such as:
+
+- ensemble probability
+- entropy
+- model disagreement
+- calibration
+- historical uncertainty
+
+Explain how it is calculated.
+
+# BOOKMAKER ODDS
+
+Do NOT use bookmaker odds as training features in the main football model initially.
+
+The goal is to learn whether football information itself can produce useful predictions.
+
+However, design an optional future benchmarking module.
+
+It may later:
+
+- ingest bookmaker odds
+- convert odds to implied probabilities
+- remove bookmaker margin
+- compare the AI against market probabilities
+
+The odds-based benchmark must remain clearly separated from the core football model.
+
+# NO BETTING SYSTEM
+
+This project's primary purpose is:
+
+football forecasting
++
+AI engineering
++
+research
+
+Do not build:
+
+- bet sizing algorithms
+- bankroll management
+- gambling strategies
+- automatic betting
+
+Market odds may only be used later as a prediction benchmark.
+
+# AUTOMATIC DATA UPDATE
+
+Build a command such as:
+
+python -m football_ai update-data
+
+It should:
+
+1. fetch newly available matches
+2. validate them
+3. append them safely
+4. rebuild required features
+5. avoid duplicates
+6. update Elo
+7. log changes
+
+# AUTOMATIC RETRAINING
+
+Support retraining.
+
+Example:
+
+python -m football_ai train
+
+and optionally:
+
+python -m football_ai retrain
+
+The retraining system should:
+
+- use new completed matches
+- version the dataset
+- train candidate models
+- compare them against the currently deployed model
+- save metrics
+- avoid automatically replacing a better model with a worse model
+
+Create a model registry abstraction.
+
+# UPCOMING MATCH PREDICTIONS
+
+Build:
+
+python -m football_ai predict-upcoming
+
+It should:
+
+1. obtain upcoming Premier League fixtures
+2. construct pre-match features
+3. produce predictions
+4. save predictions BEFORE kickoff
+5. store model version and timestamp
+6. never modify the original saved prediction after the match begins
+
+After results become available:
+
+- attach actual result
+- calculate prediction error
+- update historical performance statistics
+
+# DATABASE
+
+Use PostgreSQL for production architecture.
+
+For easy local development also support SQLite if possible.
+
+Recommended tables:
+
+teams
+players
+matches
+fixtures
+team_match_stats
+player_match_stats
+injuries
+elo_history
+features
+model_versions
+predictions
+prediction_results
+experiments
+data_sources
+
+Use SQLAlchemy and Alembic migrations.
+
+Do not tightly couple ML dataframes directly to database implementation.
+
+# BACKEND
+
+Use Python + FastAPI.
+
+Create clean API endpoints.
+
+Example:
+
+GET /teams
+
+GET /fixtures/upcoming
+
+POST /predict
+
+GET /predictions/{prediction_id}
+
+GET /models
+
+GET /models/performance
+
+GET /teams/{team}/form
+
+Possible POST /predict input:
+
+{
+    "home_team": "Arsenal",
+    "away_team": "Liverpool",
+    "match_date": "2026-10-10"
+}
+
+Possible response:
+
+{
+    "match": {
+        "home_team": "Arsenal",
+        "away_team": "Liverpool"
+    },
+
+    "probabilities": {
+        "home": 0.462,
+        "draw": 0.274,
+        "away": 0.264
+    },
+
+    "predicted_winner": "Arsenal",
+
+    "expected_goals": {
+        "home": 1.82,
+        "away": 1.39
+    },
+
+    "score_probabilities": [
+        {
+            "score": "1-1",
+            "probability": 0.112
+        },
+        {
+            "score": "2-1",
+            "probability": 0.107
+        }
+    ],
+
+    "model_predictions": {...},
+
+    "model_disagreement": "medium",
+
+    "explanation": {...},
+
+    "model_version": "...",
+
+    "generated_at": "..."
+}
+
+Use Pydantic models.
+
+Generate OpenAPI documentation automatically.
+
+# FRONTEND
+
+Use:
+
+Next.js
+TypeScript
+Tailwind CSS
+
+Choose a clean professional architecture.
+
+Create an attractive modern football analytics dashboard.
+
+Main page:
+
+Upcoming Premier League Matches
+
+Each match shows:
+
+Home Team
+vs
+Away Team
+
+Predict button
+
+Prediction page should display:
+
+HOME
+DRAW
+AWAY
+
+with probability bars.
+
+Also display:
+
+- predicted score
+- expected goals
+- top score probabilities
+- recent form
+- Elo
+- xG trends
+- injuries if available
+- model disagreement
+- individual model predictions
+- explanation
+- historical model accuracy/calibration
+
+Do not make the interface look like a gambling website.
+
+Make it look like:
+
+sports analytics
++
+AI research.
+
+# VISUALIZATIONS
+
+Include useful plots such as:
+
+- team form
+- Elo history
+- xG vs xGA
+- predicted score matrix
+- calibration chart
+- model comparison
+- feature importance
+- historical prediction performance
+
+Use appropriate Python or frontend chart libraries.
+
+# PROJECT STRUCTURE
+
+Use a professional structure similar to:
+
+premier-league-ai/
+│
+├── README.md
+├── pyproject.toml
+├── .env.example
+├── .gitignore
+│
+├── configs/
+│   ├── data.yaml
+│   ├── features.yaml
+│   ├── training.yaml
+│   └── models.yaml
+│
+├── data/
+│   ├── raw/
+│   ├── interim/
+│   ├── processed/
+│   └── external/
+│
+├── docs/
+│   ├── getting-started.md
+│   ├── architecture.md
+│   ├── data-pipeline.md
+│   ├── data-leakage.md
+│   ├── features.md
+│   ├── elo.md
+│   ├── poisson.md
+│   ├── gradient-boosting.md
+│   ├── neural-network.md
+│   ├── ensemble.md
+│   ├── calibration.md
+│   ├── backtesting.md
+│   ├── evaluation.md
+│   └── study-guide.md
+│
+├── notebooks/
+│
+├── src/
+│   └── football_ai/
+│       │
+│       ├── data/
+│       │   ├── providers/
+│       │   ├── loader.py
+│       │   ├── downloader.py
+│       │   ├── validation.py
+│       │   └── preprocessing.py
+│       │
+│       ├── database/
+│       │   ├── models.py
+│       │   ├── repository.py
+│       │   └── migrations/
+│       │
+│       ├── features/
+│       │   ├── form.py
+│       │   ├── elo.py
+│       │   ├── xg.py
+│       │   ├── schedule.py
+│       │   ├── players.py
+│       │   ├── standings.py
+│       │   └── pipeline.py
+│       │
+│       ├── models/
+│       │   ├── baseline.py
+│       │   ├── elo.py
+│       │   ├── poisson.py
+│       │   ├── xgboost_model.py
+│       │   ├── neural_network.py
+│       │   ├── ensemble.py
+│       │   └── calibration.py
+│       │
+│       ├── training/
+│       │   ├── trainer.py
+│       │   ├── tuning.py
+│       │   ├── splits.py
+│       │   └── registry.py
+│       │
+│       ├── evaluation/
+│       │   ├── metrics.py
+│       │   ├── backtest.py
+│       │   ├── calibration.py
+│       │   └── reports.py
+│       │
+│       ├── explainability/
+│       │   ├── feature_importance.py
+│       │   └── shap_analysis.py
+│       │
+│       ├── inference/
+│       │   ├── predictor.py
+│       │   └── upcoming.py
+│       │
+│       ├── api/
+│       │   ├── main.py
+│       │   ├── routes/
+│       │   └── schemas/
+│       │
+│       └── cli.py
+│
+├── frontend/
+│
+├── tests/
+│   ├── data/
+│   ├── features/
+│   ├── models/
+│   ├── leakage/
+│   └── integration/
+│
+├── models/
+├── reports/
+└── mlruns/
+
+Adjust this structure when there is a strong technical reason, but keep clear separation of concerns.
+
+# TESTING
+
+Use pytest.
+
+Create tests for:
+
+- data validation
+- feature calculations
+- Elo updates
+- Poisson probabilities
+- probabilities summing correctly
+- model serialization
+- API
+- database
+- prediction reproducibility
+- chronological splitting
+- data leakage
+
+Data-leakage tests are particularly important.
+
+# REPRODUCIBILITY
+
+Set random seeds where applicable.
+
+Record:
+
+- Python version
+- dependency versions
+- dataset hash/version
+- feature version
+- model configuration
+- random seed
+- Git commit
+
+A model should be reproducible from its stored configuration when reasonably possible.
+
+# DEPENDENCY MANAGEMENT
+
+Use a modern Python project setup.
+
+Prefer:
+
+pyproject.toml
+
+Do not create an unnecessarily huge environment.
+
+Use optional dependency groups when appropriate.
+
+For example:
+
+core
+ml
+neural
+dev
+api
+
+# CODE QUALITY
+
+Use:
+
+- Python type hints
+- clear class/function responsibilities
+- docstrings
+- logging
+- configuration files
+- pathlib
+- dependency injection where useful
+- proper error handling
+
+Avoid:
+
+- giant 2,000-line scripts
+- hidden global state
+- magic constants
+- duplicate logic
+- deeply coupled modules
+
+Prefer clear, readable engineering over clever code.
+
+# EDUCATIONAL REQUIREMENT
+
+This is extremely important.
+
+I am currently learning AI engineering from scratch.
+
+I do NOT want you to restrict the implementation to concepts I already understand.
+
+Use advanced concepts when they improve the project.
+
+However, create beginner-friendly explanations so I can study the code later.
+
+For important modules explain:
+
+WHAT this component does.
+
+WHY we need it.
+
+WHAT goes into it.
+
+WHAT comes out.
+
+WHAT mathematics it uses.
+
+HOW it fits into the full system.
+
+For mathematical ML code explain:
+
+vector shapes
+matrix shapes
+weights
+biases
+dot products
+probabilities
+loss functions
+gradients
+optimization
+
+where relevant.
+
+Do not fill normal code with unnecessary comments explaining obvious Python syntax.
+
+Put deeper explanations in /docs.
+
+# STUDY GUIDE
+
+Create:
+
+docs/study-guide.md
+
+Give me an ordered learning path through this project.
+
+For example:
+
+Level 1:
+Understand dataset and match representation.
+
+Level 2:
+Understand feature engineering.
+
+Level 3:
+Understand Elo.
+
+Level 4:
+Understand Poisson.
+
+Level 5:
+Understand train/validation/test splitting.
+
+Level 6:
+Understand gradient boosting.
+
+Level 7:
+Understand neural networks.
+
+Level 8:
+Understand probability calibration.
+
+Level 9:
+Understand ensemble models.
+
+Level 10:
+Understand backtesting.
+
+For every level provide:
+
+- files to read
+- concepts to learn
+- questions I should be able to answer
+- small exercises
+
+Assume I am learning mathematics gradually.
+
+Explain intuition before equations.
+
+# HARDWARE MODES
+
+Create configuration profiles.
+
+Example:
+
+LIGHT
+
+Designed for my current CPU laptop.
+
+- small Optuna searches
+- limited parallelism
+- small neural network
+- efficient feature generation
+
+STANDARD
+
+For a stronger computer later.
+
+RESEARCH
+
+For future GPU/cloud use.
+
+The LIGHT profile must be fully functional and capable of training the complete core system.
+
+# PERFORMANCE
+
+Use caching where useful.
+
+Avoid repeatedly recomputing historical rolling features.
+
+Use vectorized NumPy/Pandas/Polars operations instead of Python loops when appropriate.
+
+Be careful with memory use.
+
+Do not prematurely optimize everything.
+
+Profile genuinely slow areas.
+
+# SECURITY
+
+Do not commit:
+
+API keys
+database passwords
+secret tokens
+
+Use environment variables.
+
+Provide:
+
+.env.example
+
+Validate API input.
+
+Use safe database access patterns.
+
+# DEVELOPMENT STRATEGY
+
+DO NOT attempt to generate the entire application in one enormous step.
+
+Build it in controlled phases.
+
+## Phase 0 — Planning
+
+Before writing significant code:
+
+- inspect repository
+- create architecture proposal
+- identify assumptions
+- identify data interfaces
+- identify likely risks
+- identify CPU constraints
+- write docs/architecture.md
+
+Then proceed.
+
+Do not wait for my approval unless a decision genuinely prevents implementation.
+
+Choose sensible defaults.
+
+## Phase 1 — Project foundation
+
+Build:
+
+- Python package
+- configuration
+- logging
+- testing
+- CLI skeleton
+- README
+- documentation skeleton
+
+Run tests.
+
+## Phase 2 — Data
+
+Build:
+
+- data provider interfaces
+- CSV provider
+- API provider abstraction
+- validation
+- schemas
+- preprocessing
+- dataset versioning
+
+Run tests.
+
+## Phase 3 — Feature engineering
+
+Implement:
+
+- historical form
+- home/away form
+- Elo
+- xG
+- rolling statistics
+- standings
+- rest/congestion
+- optional player features
+
+Build leakage tests.
+
+Run all tests.
+
+## Phase 4 — Baselines + Elo
+
+Implement and evaluate simple baselines and Elo.
+
+Produce initial backtest report.
+
+## Phase 5 — Poisson
+
+Build goal prediction and score distribution.
+
+Evaluate chronologically.
+
+## Phase 6 — Gradient boosting
+
+Build XGBoost pipeline.
+
+Add Optuna tuning.
+
+Evaluate.
+
+## Phase 7 — Neural network
+
+Build CPU-friendly PyTorch model.
+
+Evaluate whether it genuinely adds value.
+
+Do not keep it in the final ensemble merely because neural networks sound advanced.
+
+## Phase 8 — Calibration
+
+Evaluate and calibrate probabilities.
+
+## Phase 9 — Ensemble
+
+Build time-safe stacking/blending.
+
+Compare against every individual model.
+
+## Phase 10 — Backtesting
+
+Run realistic historical walk-forward testing.
+
+Generate reports.
+
+## Phase 11 — Experiment tracking
+
+Integrate MLflow cleanly.
+
+## Phase 12 — Database
+
+Implement PostgreSQL/SQLite persistence.
+
+Store historical predictions.
+
+## Phase 13 — API
+
+Build FastAPI inference layer.
+
+## Phase 14 — Frontend
+
+Build Next.js analytics dashboard.
+
+## Phase 15 — Automation
+
+Implement:
+
+update-data
+retrain
+predict-upcoming
+record-results
+evaluate-predictions
+
+## Phase 16 — Documentation
+
+Finish all educational documentation.
+
+Create the study guide.
+
+## Phase 17 — Final quality pass
+
+Run:
+
+- formatter
+- linter
+- type checker
+- tests
+- leakage tests
+- integration tests
+
+Check Windows compatibility.
+
+Update README with exact setup commands.
+
+# AFTER EVERY PHASE
+
+After completing each phase:
+
+1. run tests
+2. fix failures
+3. review for data leakage
+4. update documentation
+5. summarize what was implemented
+6. document important decisions
+7. commit the working state if Git is configured
+
+Commit messages should be meaningful.
+
+# IMPORTANT DEVELOPMENT BEHAVIOR
+
+Do not fake functionality.
+
+If data is unavailable, clearly implement an interface/fallback rather than inventing values.
+
+Do not silently fabricate player injuries, xG, lineups, or statistics.
+
+If an API does not provide something:
+
+mark it unavailable
+or
+use another explicitly documented source.
+
+Do not hardcode example predictions and pretend they came from a trained model.
+
+Do not call a model "accurate" without evaluation.
+
+Do not optimize against the final test set.
+
+Do not use future information.
+
+Do not choose models based on test-set performance.
+
+Do not confuse accuracy with probability quality.
+
+Do not hide poor results.
+
+This is a research/learning project, so negative results are valuable.
+
+# FINAL GOAL
+
+At the end I want to be able to run something similar to:
+
+football-ai update-data
+
+football-ai train
+
+football-ai evaluate
+
+football-ai predict-upcoming
+
+football-ai api
+
+and separately:
+
+npm run dev
+
+for the frontend.
+
+The finished system should feel like a small professional football analytics/ML platform rather than a tutorial notebook.
+
+Prioritize, in this order:
+
+1. no data leakage
+2. correct evaluation
+3. useful calibrated probabilities
+4. reproducibility
+5. clean architecture
+6. explainability
+7. maintainability
+8. educational value
+9. prediction performance
+10. UI polish
+
+Start by inspecting the repository and creating the Phase 0 architecture and implementation plan.
+
+Then begin implementing Phase 1.

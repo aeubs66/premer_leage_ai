@@ -1,0 +1,3 @@
+xgboost: {max_depth: 3, learning_rate: 0.05, n_estimators: 200, min_child_weight: 5, subsample: 0.8, colsample_bytree: 0.8, reg_lambda: 5}
+poisson: {regularization: 0.05, decay_days: 365, dixon_coles: false}
+neural: {embedding_size: 4, dropout: 0.2, learning_rate: 0.001, weight_decay: 0.01, batch_size: 64}

@@ -1,0 +1,8 @@
+provider: football_data_csv
+seasons: 5
+base_url: https://www.football-data.co.uk
+competition: E0
+timeout_seconds: 30
+retries: 3
+fixture_csv: data/external/fixtures.csv
+result_lag_hours: 3

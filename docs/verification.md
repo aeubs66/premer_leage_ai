@@ -14,6 +14,10 @@ The implementation is saved directly in `D:\premer_leage_ai`, with local depende
 - The isolated end-to-end test fits actual models on explicitly synthetic test records, saves a forecast, validates exact tree SHAP and score coherence, rejects direct SQL mutation, attaches a result separately, and evaluates it. Synthetic test records never enter the real project database.
 - The live API returned successful health, team-form, and performance responses. Browser inspection confirmed the dashboard and measured research page render correctly.
 
+## Repository readiness update
+
+The repository audit found no application binaries or live credentials in committed history. Added Windows setup instructions, repo-level contributor/security guidance, safe ignore rules, GitHub Actions checks, actual dataset source/checksum metadata, and compact manifests for both existing model versions. `.env.example` no longer pins this PC's `D:` path. Existing model metrics, application behavior, and Git history were preserved. The follow-up was kept at the repository level per the user's direction, so an application-level doctor and packaged state-transfer feature were not added.
+
 ## Measured research results
 
 Initial champion: `64bb78bed878432b`. Selection chose a small meta ensemble containing Elo, Poisson, XGBoost, and the neural network. No calibration transform improved selection log loss. The ensemble was not changed based on the final test.

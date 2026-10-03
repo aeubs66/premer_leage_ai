@@ -1,0 +1,27 @@
+name: Bug report
+description: Report a reproducible problem with the application.
+body:
+  - type: markdown
+    attributes:
+      value: Do not include API tokens, `.env` contents, credentials, private datasets, or state-transfer archives.
+  - type: input
+    id: version
+    attributes:
+      label: Commit or version
+      description: `git rev-parse --short HEAD`
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps and observed result
+      description: Include a concise reproduction and the behavior you expected.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Redacted error output
+      description: Remove secrets and personal data before sharing.
+    validations:
+      required: false

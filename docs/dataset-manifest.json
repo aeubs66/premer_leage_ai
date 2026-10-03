@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "provider": "Football-Data.co.uk English Premier League (E0)",
+  "dataset_version": "484a3b0fae98f7897dcc2722ae241b2bb8089822e353f6ea1d88e0ff27074422",
+  "canonical_match_records": 1570,
+  "seasons": {
+    "2022/2023": 380,
+    "2023/2024": 380,
+    "2024/2025": 380,
+    "2025/2026": 380,
+    "2026/2027": 50
+  },
+  "snapshot_created_at": "2026-10-03T22:06:17.801784+03:00",
+  "result_availability_assumption": "3h after timed kickoff; next local day for date-only CSV",
+  "raw_sources": [
+    {
+      "season": "2022/2023",
+      "records": 380,
+      "url": "https://www.football-data.co.uk/mmz4281/2223/E0.csv",
+      "sha256": "8442792d3b614c94ea3cf381bd2736805889cc1713169035368fff19c3d02380",
+      "downloaded_at": "2026-10-03T21:47:34.290194+03:00"
+    },
+    {
+      "season": "2023/2024",
+      "records": 380,
+      "url": "https://www.football-data.co.uk/mmz4281/2324/E0.csv",
+      "sha256": "b2e057b0ed959f198b0f63d2391c01239f3608e6de5db68edab3f88e04d07ff3",
+      "downloaded_at": "2026-10-03T21:47:34.290194+03:00"
+    },
+    {
+      "season": "2024/2025",
+      "records": 380,
+      "url": "https://www.football-data.co.uk/mmz4281/2425/E0.csv",
+      "sha256": "d0c8ce4a96d886cf60cf101f570f4a3893844226f91c7bd769eb568c49edbfa4",
+      "downloaded_at": "2026-10-03T21:47:34.290194+03:00"
+    },
+    {
+      "season": "2025/2026",
+      "records": 380,
+      "url": "https://www.football-data.co.uk/mmz4281/2526/E0.csv",
+      "sha256": "3e3a8352f9ada6789c508d6ca184424421fed56a30400904a4a327c583407e62",
+      "downloaded_at": "2026-10-03T21:47:34.290194+03:00"
+    },
+    {
+      "season": "2026/2027",
+      "records": 50,
+      "url": "https://www.football-data.co.uk/mmz4281/2627/E0.csv",
+      "sha256": "8e21d4821be776332f3504f55f85b4277f326f03513b2c7501fbdedf92b8b1a2",
+      "downloaded_at": "2026-10-03T21:47:34.290194+03:00"
+    }
+  ]
+}

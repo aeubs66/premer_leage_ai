@@ -1,0 +1,16 @@
+name: Research or product idea
+description: Suggest a measurable improvement or learning resource.
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or research question
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Data and evaluation needed
+      description: Note temporal-availability and validation requirements where relevant.
+    validations:
+      required: false

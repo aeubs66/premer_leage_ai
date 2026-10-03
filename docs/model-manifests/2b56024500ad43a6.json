@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "model_version": "2b56024500ad43a6",
+  "trained_at": "2026-10-03T22:24:43.739566+03:00",
+  "data_cutoff": "2026-09-20T21:30:00+03:00",
+  "research_cutoff": "2025-05-25T21:00:00+03:00",
+  "dataset_version": "484a3b0fae98f7897dcc2722ae241b2bb8089822e353f6ea1d88e0ff27074422",
+  "feature_version": "prekickoff-v1-3f077343bcefa71a",
+  "python_version": "3.12.14",
+  "source_git_commit": "0af5d0c33e358cb10fe7ad7f2e139521e8edf4ca",
+  "seed": 42,
+  "profile": "LIGHT",
+  "ensemble": "meta",
+  "members": [
+    "elo",
+    "poisson",
+    "xgboost",
+    "neural"
+  ],
+  "calibration": "none",
+  "test_season": "2025/2026",
+  "test_metrics": {
+    "matches": 380,
+    "log_loss": 1.0303051387636202,
+    "brier": 0.6195261795342203,
+    "accuracy": 0.47368421052631576,
+    "expected_calibration_error": 0.046723126941191795
+  },
+  "validation_metrics": {
+    "matches": 191,
+    "log_loss": 0.9648189960492614,
+    "brier": 0.5732876871961081,
+    "accuracy": 0.5706806282722513,
+    "expected_calibration_error": 0.05250330463117227
+  },
+  "artifact_sha256": {
+    "research": "28f163f26fb95b4d427726b112c557636984e426435eb4b2fda2ba08bc2f832e",
+    "production": "613db286534364c1f52bd217bf6071c569be9271307ca9a6a512ac545974e003"
+  },
+  "promotion": "candidate_requires_retrain_gate",
+  "dependencies": {
+    "numpy": "2.5.3",
+    "pandas": "2.3.3",
+    "scipy": "1.18.1",
+    "scikit-learn": "1.9.1",
+    "xgboost": "3.4.1",
+    "pydantic": "2.13.5"
+  }
+}

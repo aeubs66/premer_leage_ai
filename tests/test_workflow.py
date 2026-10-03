@@ -78,6 +78,13 @@ def test_predict_save_result_and_evaluate(tmp_path, monkeypatch):
         "boost_parameters": model_config["xgboost"],
     }
     artifact = Artifact(models, ensemble, Calibrator(), recipe, diagnostics)
+    from football_ai.inference.predictor import Predictor
+
+    tree_artifact = Artifact(
+        models, Ensemble("single", ["xgboost"]), Calibrator(), recipe, diagnostics
+    )
+    tree_explanation = Predictor.explain(tree_artifact, features.iloc[:1], records[0])
+    assert tree_explanation["factors"] and "SHAP" in tree_explanation["method"]
     manifest = {
         "version": "abc123",
         "trained_at": now.isoformat(),

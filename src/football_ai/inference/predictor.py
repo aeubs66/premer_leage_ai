@@ -156,8 +156,13 @@ class Predictor:
 
     @staticmethod
     def explain(artifact, features, fixture):
-        model = artifact.models.get("xgboost")
+        component = next(
+            (name for name in artifact.ensemble.names if name in ("xgboost", "xgboost_no_h2h")),
+            None,
+        )
+        model = artifact.models.get(component) if component else None
         factors = []
+        method = "No supported local additive attribution for this selected recipe. Inspect the independent model probabilities and historical team context."
         if model is not None:
             import xgboost as xgb
 
@@ -178,10 +183,34 @@ class Predictor:
                 }
                 for i in order
             ]
+            method = "Exact tree SHAP contributions for the selected boosting component; contributions are to its top-outcome logit, not the final ensemble probability."
+        elif "elo" in artifact.ensemble.names:
+            from football_ai.models.elo import EloModel
+
+            component = "elo"
+            elo = artifact.models["elo"]
+            numeric = EloModel._inputs(features)[0]
+            predicted_class = int(elo.predict_proba(features, [fixture])[0].argmax())
+            importance = elo.model.coef_[predicted_class] * numeric
+            factors = [
+                {
+                    "feature": name,
+                    "value": float(value),
+                    "logit_contribution": float(contribution),
+                    "direction": "supports" if contribution > 0 else "opposes",
+                }
+                for name, value, contribution in zip(
+                    ["elo_difference_scaled", "absolute_elo_difference_scaled"],
+                    numeric,
+                    importance,
+                    strict=True,
+                )
+            ]
+            method = "Linear feature contributions to the selected Elo component's top-outcome logit; these are not the final ensemble probability or proven causes."
         return {
             "title": "Factors associated with this prediction",
-            "method": "Exact tree SHAP contributions for the XGBoost component; contributions are to its selected outcome logit, not the final ensemble probability.",
-            "component": "xgboost",
+            "method": method,
+            "component": component,
             "factors": factors,
             "caution": "Associations are not proven causes.",
         }

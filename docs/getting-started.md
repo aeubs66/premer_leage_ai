@@ -29,7 +29,7 @@ Open http://127.0.0.1:3000. API documentation is at http://127.0.0.1:8000/docs. 
 
 ## Data and options
 
-`update-data --offline` reuses cached results. `update-data --csv PATH --season 2024/2025` imports your data. `update-data --fixtures PATH` imports an alternate fixture file. `update-data --api-fixtures` uses `FOOTBALL_DATA_TOKEN` from the process environment. A provider may publish only a short upcoming window; an empty fixture list is a real data state.
+`update-data --offline` reuses cached results. `update-data --csv PATH --season 2024/2025` imports your data. `update-data --fixtures PATH` imports an alternate fixture file. `update-data --api-fixtures` uses `FOOTBALL_DATA_TOKEN` from the process environment or local `.env` file. A provider may publish only a short upcoming window; an empty fixture list is a real data state.
 
 Default training is LIGHT/FAST with CPU PyTorch. `train --no-neural` omits neural candidates; `train --no-tune` uses configured tree parameters; `train --optimization NORMAL` expands tuning. A second `train` creates a candidate rather than silently replacing the champion. Use `retrain` for the independent comparison gate. Use `rollback` to restore the previous champion.
 

@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -12,6 +13,9 @@ class Settings(BaseSettings):
     root: Path = Path(__file__).resolve().parents[2]
     database_url: str = "sqlite:///data/football.db"
     profile: str = "LIGHT"
+    football_data_token: SecretStr | None = Field(
+        default=None, validation_alias="FOOTBALL_DATA_TOKEN"
+    )
 
     def load(self, name: str) -> dict[str, Any]:
         with (self.root / "configs" / f"{name}.yaml").open(encoding="utf-8") as stream:

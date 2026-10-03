@@ -50,7 +50,12 @@ def update_data(
     elif not csv_path:
         incoming += download_fixtures(settings, offline)
     if api_fixtures:
-        incoming += FootballDataAPIProvider().fixtures()
+        token = (
+            settings.football_data_token.get_secret_value()
+            if settings.football_data_token
+            else None
+        )
+        incoming += FootballDataAPIProvider(token).fixtures()
     merged = {m.id: m for m in previous}
     added, changed = 0, 0
     for match in incoming:

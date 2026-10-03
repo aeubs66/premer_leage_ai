@@ -5,8 +5,18 @@ import json
 from typing import Protocol
 
 import joblib
+import numpy as np
 
 from football_ai.config import Settings
+
+
+def promotion_allowed(champion: dict, candidate: dict) -> bool:
+    values = [champion["log_loss"], champion["brier"], candidate["log_loss"], candidate["brier"]]
+    if not np.isfinite(values).all():
+        return False
+    return bool(
+        candidate["log_loss"] < champion["log_loss"] and candidate["brier"] <= champion["brier"]
+    )
 
 
 class ModelRegistry(Protocol):

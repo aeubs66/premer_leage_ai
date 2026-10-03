@@ -24,7 +24,7 @@ from football_ai.models.elo import EloModel
 from football_ai.models.ensemble import Ensemble
 from football_ai.models.neural import NeuralModel
 from football_ai.models.poisson import PoissonModel, reconcile_scores
-from football_ai.training.registry import LocalRegistry
+from football_ai.training.registry import LocalRegistry, promotion_allowed
 from football_ai.training.splits import meta_partitions, season_split, walk_folds
 from football_ai.training.tracking import track
 from football_ai.training.tuning import tune
@@ -127,6 +127,14 @@ def train(settings: Settings, neural=None, optimization=None, retrain=False, tun
     repository = Repository(settings)
     repository.migrate()
     records, dataset_version = load_snapshot(settings)
+    if retrain and settings.path("models/champion.json").exists():
+        _, current_manifest = LocalRegistry(settings).load()
+        if current_manifest["dataset_version"] == dataset_version:
+            return {
+                "promotion": "rejected_no_new_dataset",
+                "champion": current_manifest["version"],
+                "dataset_version": dataset_version,
+            }
     now = datetime.now(UTC)
     matches = [m for m in records if m.status == "finished" and m.result_available_at < now]
     observations = repository.observations()
@@ -460,10 +468,7 @@ def train(settings: Settings, neural=None, optimization=None, retrain=False, tun
                             "champion": old_metrics,
                             "candidate": new_metrics,
                         }
-                        if (
-                            new_metrics["log_loss"] < old_metrics["log_loss"]
-                            and new_metrics["brier"] <= old_metrics["brier"]
-                        ):
+                        if promotion_allowed(old_metrics, new_metrics):
                             manifest["promotion"] = "promoted"
                         else:
                             manifest["promotion"] = "rejected_validation"

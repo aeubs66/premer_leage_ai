@@ -4,6 +4,7 @@ from test_data import match
 from football_ai.evaluation.metrics import metrics
 from football_ai.models.calibration import Calibrator
 from football_ai.models.ensemble import Ensemble
+from football_ai.training.registry import promotion_allowed
 from football_ai.training.splits import meta_partitions, walk_folds
 
 
@@ -32,3 +33,11 @@ def test_calibration_and_ensemble_only_use_passed_blocks():
         calibrator = Calibrator(kind).fit(probabilities[90:135], labels[90:135])
         np.testing.assert_allclose(calibrator.transform(probabilities[135:]).sum(axis=1), 1)
     assert metrics(labels, probabilities)["n"] == 180
+
+
+def test_deployment_requires_both_probability_metrics():
+    champion = {"log_loss": 1.0, "brier": 0.6}
+    assert promotion_allowed(champion, {"log_loss": 0.99, "brier": 0.59})
+    assert not promotion_allowed(champion, {"log_loss": 0.99, "brier": 0.61})
+    assert not promotion_allowed(champion, {"log_loss": 1.01, "brier": 0.59})
+    assert not promotion_allowed(champion, {"log_loss": float("nan"), "brier": 0.59})

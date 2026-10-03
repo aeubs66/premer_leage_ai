@@ -20,7 +20,9 @@ def score_grid(home_rate: float, away_rate: float, rho: float = 0.0) -> np.ndarr
     scores = np.arange(maximum + 1)
     grid = np.outer(poisson.pmf(scores, home_rate), poisson.pmf(scores, away_rate))
     # Bound rho for this fixture so all four low-score correction factors stay positive.
-    rho = float(np.clip(rho, -0.99 / max(home_rate, away_rate), 0.99 / max(1, home_rate * away_rate)))
+    rho = float(
+        np.clip(rho, -0.99 / max(home_rate, away_rate), 0.99 / max(1, home_rate * away_rate))
+    )
     grid[0, 0] *= 1 - home_rate * away_rate * rho
     grid[0, 1] *= 1 + home_rate * rho
     grid[1, 0] *= 1 + away_rate * rho
@@ -44,10 +46,19 @@ def reconcile_scores(grid: np.ndarray, outcome_probabilities: np.ndarray) -> np.
 
 class PoissonModel:
     def __init__(self, regularization=0.05, decay_days=365, dixon_coles=False):
-        self.regularization, self.decay_days, self.dixon_coles = regularization, decay_days, dixon_coles
+        self.regularization, self.decay_days, self.dixon_coles = (
+            regularization,
+            decay_days,
+            dixon_coles,
+        )
 
     def fit(self, features, matches):
-        self.teams = {team: i for i, team in enumerate(sorted({m.home_team for m in matches} | {m.away_team for m in matches}))}
+        self.teams = {
+            team: i
+            for i, team in enumerate(
+                sorted({m.home_team for m in matches} | {m.away_team for m in matches})
+            )
+        }
         n = len(self.teams)
         hi = np.array([self.teams[m.home_team] for m in matches])
         ai = np.array([self.teams[m.away_team] for m in matches])
@@ -58,8 +69,8 @@ class PoissonModel:
         weights = np.exp(-age / self.decay_days)
 
         def objective(theta):
-            attack = theta[2:2 + n] - theta[2:2 + n].mean()
-            defence = theta[2 + n:2 + 2 * n]
+            attack = theta[2 : 2 + n] - theta[2 : 2 + n].mean()
+            defence = theta[2 + n : 2 + 2 * n]
             lh = np.exp(theta[0] + theta[1] + attack[hi] + defence[ai])
             la = np.exp(theta[0] + attack[ai] + defence[hi])
             losses = lh - hg * np.log(lh) + gammaln(hg + 1) + la - ag * np.log(la) + gammaln(ag + 1)
@@ -82,7 +93,9 @@ class PoissonModel:
         bounds = [(-1.5, 1.5), (-0.5, 0.7)] + [(-1.5, 1.5)] * (2 * n)
         if self.dixon_coles:
             bounds += [(-0.1, 0.1)]
-        result = minimize(objective, theta, method="L-BFGS-B", bounds=bounds, options={"maxiter": 400})
+        result = minimize(
+            objective, theta, method="L-BFGS-B", bounds=bounds, options={"maxiter": 400}
+        )
         if not result.success:
             raise RuntimeError(f"Poisson optimization failed: {result.message}")
         self.theta = result.x
@@ -90,14 +103,16 @@ class PoissonModel:
 
     def rates(self, matches):
         n = len(self.teams)
-        attack = self.theta[2:2 + n] - self.theta[2:2 + n].mean()
-        defence = self.theta[2 + n:2 + 2 * n]
+        attack = self.theta[2 : 2 + n] - self.theta[2 : 2 + n].mean()
+        defence = self.theta[2 + n : 2 + 2 * n]
         output = []
         for match in matches:
             hi, ai = self.teams.get(match.home_team), self.teams.get(match.away_team)
             ha, hd = (attack[hi], defence[hi]) if hi is not None else (0, 0)
             aa, ad = (attack[ai], defence[ai]) if ai is not None else (0, 0)
-            output.append([np.exp(self.theta[0] + self.theta[1] + ha + ad), np.exp(self.theta[0] + aa + hd)])
+            output.append(
+                [np.exp(self.theta[0] + self.theta[1] + ha + ad), np.exp(self.theta[0] + aa + hd)]
+            )
         return np.array(output)
 
     def grids(self, matches):

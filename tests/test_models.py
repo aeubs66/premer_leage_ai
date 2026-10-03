@@ -1,13 +1,13 @@
 import joblib
 import numpy as np
 import pytest
+from test_data import match
 
 from football_ai.config import Settings
 from football_ai.features.pipeline import FeaturePipeline
 from football_ai.models.baseline import Baseline
 from football_ai.models.elo import EloModel
 from football_ai.models.poisson import PoissonModel, reconcile_scores, regions, score_grid
-from test_data import match
 
 
 def test_score_distribution_and_tail():
@@ -21,7 +21,9 @@ def test_score_distribution_and_tail():
             assert grid.shape[0] > 9
 
 
-@pytest.mark.parametrize("model", [Baseline(), EloModel(), PoissonModel(), PoissonModel(dixon_coles=True)])
+@pytest.mark.parametrize(
+    "model", [Baseline(), EloModel(), PoissonModel(), PoissonModel(dixon_coles=True)]
+)
 def test_models_and_serialization(model, tmp_path):
     records = [match(i, hg=i % 3, ag=(i + 1) % 3) for i in range(30)]
     features = FeaturePipeline(Settings().load("features")).transform(records)
@@ -30,4 +32,6 @@ def test_models_and_serialization(model, tmp_path):
     np.testing.assert_allclose(probabilities.sum(axis=1), 1)
     path = tmp_path / "model.joblib"
     joblib.dump(model, path)
-    np.testing.assert_allclose(joblib.load(path).predict_proba(features.iloc[25:], records[25:]), probabilities)
+    np.testing.assert_allclose(
+        joblib.load(path).predict_proba(features.iloc[25:], records[25:]), probabilities
+    )

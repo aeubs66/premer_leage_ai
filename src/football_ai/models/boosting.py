@@ -8,21 +8,45 @@ from football_ai.models.base import normalize
 
 
 class BoostingModel:
-    def __init__(self, parameters=None, threads=2, seed=42, engine="xgboost", exclude_head_to_head=False):
-        self.parameters, self.threads, self.seed, self.engine = parameters or {}, threads, seed, engine
+    def __init__(
+        self, parameters=None, threads=2, seed=42, engine="xgboost", exclude_head_to_head=False
+    ):
+        self.parameters, self.threads, self.seed, self.engine = (
+            parameters or {},
+            threads,
+            seed,
+            engine,
+        )
         self.exclude_head_to_head = exclude_head_to_head
 
     def fit(self, features, matches):
-        self.columns = [c for c in features.columns if not (self.exclude_head_to_head and c.startswith("head_to_head"))]
+        self.columns = [
+            c
+            for c in features.columns
+            if not (self.exclude_head_to_head and c.startswith("head_to_head"))
+        ]
         features = features[self.columns]
-        self.imputer = SimpleImputer(strategy="median", keep_empty_features=True, add_indicator=True)
+        self.imputer = SimpleImputer(
+            strategy="median", keep_empty_features=True, add_indicator=True
+        )
         numeric = self.imputer.fit_transform(features)
         if self.engine == "xgboost":
             from xgboost import XGBClassifier
-            self.model = XGBClassifier(**self.parameters, device="cpu", tree_method="hist", n_jobs=self.threads,
-                                       random_state=self.seed, objective="multi:softprob", num_class=3, eval_metric="mlogloss")
+
+            self.model = XGBClassifier(
+                **self.parameters,
+                device="cpu",
+                tree_method="hist",
+                n_jobs=self.threads,
+                random_state=self.seed,
+                objective="multi:softprob",
+                num_class=3,
+                eval_metric="mlogloss",
+            )
         else:
-            self.model = HistGradientBoostingClassifier(max_iter=150, max_leaf_nodes=15, random_state=self.seed, early_stopping=False)
+            self.model = HistGradientBoostingClassifier(
+                max_iter=150, max_leaf_nodes=15, random_state=self.seed, early_stopping=False
+            )
         self.model.fit(numeric, np.array([m.outcome for m in matches]))
         return self
 

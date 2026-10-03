@@ -18,9 +18,11 @@ class Calibrator:
         targets = np.asarray(targets, dtype=int)
         if self.kind == "temperature":
             logits = np.log(probabilities)
+
             def loss(log_temperature):
                 prediction = softmax(logits / np.exp(log_temperature), axis=1)
                 return float(-np.log(prediction[np.arange(len(targets)), targets]).mean())
+
             result = minimize_scalar(loss, bounds=(-2, 2), method="bounded")
             self.temperature = float(np.exp(result.x))
         elif self.kind in ("sigmoid", "isotonic"):
@@ -29,8 +31,16 @@ class Calibrator:
                 binary = (targets == label).astype(int)
                 if len(np.unique(binary)) < 2:
                     raise ValueError("Calibration block must include all three outcomes")
-                model = LogisticRegression(C=1) if self.kind == "sigmoid" else IsotonicRegression(out_of_bounds="clip", y_min=1e-6, y_max=1 - 1e-6)
-                x = np.log(probabilities[:, label] / (1 - probabilities[:, label])).reshape(-1, 1) if self.kind == "sigmoid" else probabilities[:, label]
+                model = (
+                    LogisticRegression(C=1)
+                    if self.kind == "sigmoid"
+                    else IsotonicRegression(out_of_bounds="clip", y_min=1e-6, y_max=1 - 1e-6)
+                )
+                x = (
+                    np.log(probabilities[:, label] / (1 - probabilities[:, label])).reshape(-1, 1)
+                    if self.kind == "sigmoid"
+                    else probabilities[:, label]
+                )
                 model.fit(x, binary)
                 self.models.append(model)
         return self

@@ -21,7 +21,14 @@ class Settings(BaseSettings):
         return self.root / relative
 
     def prepare(self) -> None:
-        for directory in ["data/raw", "data/processed", "data/external", "models", "reports", "mlruns"]:
+        for directory in [
+            "data/raw",
+            "data/processed",
+            "data/external",
+            "models",
+            "reports",
+            "mlruns",
+        ]:
             self.path(directory).mkdir(parents=True, exist_ok=True)
 
     def db_url(self) -> str:

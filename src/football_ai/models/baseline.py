@@ -12,9 +12,12 @@ class Baseline:
     def fit(self, features, matches):
         counts = np.bincount([m.outcome for m in matches], minlength=3) + 1
         self.frequency = counts / counts.sum()
-        self.previous = {}
+        self.previous: dict[tuple[str, str], list[float]] = {}
         for match in matches:
-            for team, goals, conceded in [(match.home_team, match.home_goals, match.away_goals), (match.away_team, match.away_goals, match.home_goals)]:
+            for team, goals, conceded in [
+                (match.home_team, match.home_goals, match.away_goals),
+                (match.away_team, match.away_goals, match.home_goals),
+            ]:
                 points = 3 if goals > conceded else 1 if goals == conceded else 0
                 self.previous.setdefault((match.season, team), []).append(points)
         return self

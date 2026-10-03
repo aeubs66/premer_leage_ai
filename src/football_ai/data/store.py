@@ -5,7 +5,6 @@ import json
 import logging
 import time
 from datetime import UTC, datetime
-from pathlib import Path
 
 import httpx
 
@@ -37,9 +36,16 @@ def save_snapshot(settings: Settings, records: list[Match]) -> str:
     target = settings.path(f"data/processed/{digest}.jsonl")
     if not target.exists():
         target.write_text(payload, encoding="utf-8")
-    manifest = {"version": digest, "records": len(records), "created_at": datetime.now(UTC).isoformat(),
-                "seasons": sorted({m.season for m in records}), "availability_assumptions": "3h after timed kickoff; next local day for date-only CSV"}
-    settings.path("data/processed/latest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    manifest = {
+        "version": digest,
+        "records": len(records),
+        "created_at": datetime.now(UTC).isoformat(),
+        "seasons": sorted({m.season for m in records}),
+        "availability_assumptions": "3h after timed kickoff; next local day for date-only CSV",
+    }
+    settings.path("data/processed/latest.json").write_text(
+        json.dumps(manifest, indent=2), encoding="utf-8"
+    )
     return digest
 
 
@@ -49,7 +55,13 @@ def load_snapshot(settings: Settings, version: str | None = None) -> tuple[list[
         if not path.exists():
             raise ValueError("No dataset. Run football-ai update-data first.")
         version = json.loads(path.read_text())["version"]
-    records = [Match.model_validate_json(line) for line in settings.path(f"data/processed/{version}.jsonl").read_text(encoding="utf-8").splitlines() if line]
+    records = [
+        Match.model_validate_json(line)
+        for line in settings.path(f"data/processed/{version}.jsonl")
+        .read_text(encoding="utf-8")
+        .splitlines()
+        if line
+    ]
     return records, version
 
 
@@ -84,20 +96,28 @@ def download(settings: Settings, refresh: bool = True) -> list[Match]:
                     except (httpx.HTTPError, ValueError) as exc:
                         log.warning("Download %s attempt %s: %s", code, attempt + 1, exc)
                         if attempt + 1 < config["retries"]:
-                            time.sleep(2 ** attempt)
+                            time.sleep(2**attempt)
                 if body:
                     directory.mkdir(parents=True, exist_ok=True)
                     digest = hashlib.sha256(body).hexdigest()
                     path = directory / f"{digest}.csv"
                     if not path.exists():
                         path.write_bytes(body)
-                        path.with_suffix(".json").write_text(json.dumps({"url": url, "sha256": digest, "downloaded_at": now.isoformat()}, indent=2), encoding="utf-8")
+                        path.with_suffix(".json").write_text(
+                            json.dumps(
+                                {"url": url, "sha256": digest, "downloaded_at": now.isoformat()},
+                                indent=2,
+                            ),
+                            encoding="utf-8",
+                        )
                 elif cached:
                     path = max(cached, key=lambda p: p.stat().st_mtime)
                     log.warning("Using cached season %s", code)
                 else:
                     continue
-            season_records = CSVDataProvider(path, f"{year}/{year + 1}", config["result_lag_hours"]).records()
+            season_records = CSVDataProvider(
+                path, f"{year}/{year + 1}", config["result_lag_hours"]
+            ).records()
             if not season_records:
                 continue
             records.extend(season_records)
@@ -105,5 +125,45 @@ def download(settings: Settings, refresh: bool = True) -> list[Match]:
             if obtained >= config["seasons"]:
                 break
     if not records:
-        raise ValueError("No downloadable seasons or cached data. Use update-data --csv PATH --season YEAR/YEAR.")
+        raise ValueError(
+            "No downloadable seasons or cached data. Use update-data --csv PATH --season YEAR/YEAR."
+        )
     return validate_records(records)
+
+
+def download_fixtures(settings: Settings, offline=False) -> list[Match]:
+    """Fetch the vendor's currently published fixture CSV; history stays separate."""
+    directory = settings.path("data/raw/fixtures")
+    directory.mkdir(parents=True, exist_ok=True)
+    cached = sorted(directory.glob("*.csv"), key=lambda p: p.stat().st_mtime)
+    path = cached[-1] if cached else None
+    if not offline:
+        config = settings.load("data")
+        url = f"{config['base_url']}/fixtures.csv"
+        for attempt in range(config["retries"]):
+            try:
+                response = httpx.get(url, timeout=config["timeout_seconds"], follow_redirects=True)
+                response.raise_for_status()
+                if b"HomeTeam" not in response.content[:1000]:
+                    raise ValueError("Fixture response is not CSV")
+                digest = hashlib.sha256(response.content).hexdigest()
+                path = directory / f"{digest}.csv"
+                if not path.exists():
+                    path.write_bytes(response.content)
+                    path.with_suffix(".json").write_text(
+                        json.dumps(
+                            {
+                                "url": url,
+                                "sha256": digest,
+                                "downloaded_at": datetime.now(UTC).isoformat(),
+                            },
+                            indent=2,
+                        ),
+                        encoding="utf-8",
+                    )
+                break
+            except (httpx.HTTPError, ValueError) as exc:
+                log.warning("Fixture refresh failed: %s", exc)
+                if attempt + 1 < config["retries"]:
+                    time.sleep(2**attempt)
+    return CSVDataProvider(path).fixtures() if path else []

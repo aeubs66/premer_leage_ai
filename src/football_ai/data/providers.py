@@ -16,10 +16,14 @@ from football_ai.data.schemas import Match, Observation, match_key, team_name
 
 log = logging.getLogger(__name__)
 STATS = {
-    "shots": ("HS", "AS"), "shots_on_target": ("HST", "AST"),
-    "corners": ("HC", "AC"), "fouls": ("HF", "AF"),
-    "yellow_cards": ("HY", "AY"), "red_cards": ("HR", "AR"),
-    "xg": ("HxG", "AxG"), "possession": ("HPoss", "APoss"),
+    "shots": ("HS", "AS"),
+    "shots_on_target": ("HST", "AST"),
+    "corners": ("HC", "AC"),
+    "fouls": ("HF", "AF"),
+    "yellow_cards": ("HY", "AY"),
+    "red_cards": ("HR", "AR"),
+    "xg": ("HxG", "AxG"),
+    "possession": ("HPoss", "APoss"),
 }
 
 
@@ -40,6 +44,8 @@ class CSVDataProvider:
         matches: list[Match] = []
         for line, row in enumerate(rows, 2):
             if not any(row.values()):
+                continue
+            if row.get("Div") not in (None, "", "E0"):
                 continue
             try:
                 matches.append(self._parse(row))
@@ -66,23 +72,37 @@ class CSVDataProvider:
             season = f"{start}/{start + 1}"
         hg = row.get("home_goals", row.get("FTHG"))
         ag = row.get("away_goals", row.get("FTAG"))
-        hg = int(hg) if hg not in (None, "") else None
-        ag = int(ag) if ag not in (None, "") else None
+        hg = int(str(hg)) if hg not in (None, "") else None
+        ag = int(str(ag)) if ag not in (None, "") else None
         available = row.get("available_at")
-        availability = datetime.fromisoformat(available.replace("Z", "+00:00")) if available else None
+        availability = (
+            datetime.fromisoformat(available.replace("Z", "+00:00")) if available else None
+        )
         if hg is not None and availability is None:
-            availability = kickoff + (timedelta(days=1) if date_only else timedelta(hours=self.lag_hours))
+            availability = kickoff + (
+                timedelta(days=1) if date_only else timedelta(hours=self.lag_hours)
+            )
         hs, ast = {}, {}
         for name, (hcol, acol) in STATS.items():
             hs[name] = float(row[hcol]) if row.get(hcol) else None
             ast[name] = float(row[acol]) if row.get(acol) else None
         # Odds and unrecognized columns are never passed through to features.
         return Match(
-            id=match_key(season, home, away), season=season, kickoff=kickoff,
-            home_team=home, away_team=away, status=row.get("status") or ("finished" if hg is not None else "scheduled"),
-            home_goals=hg, away_goals=ag, available_at=availability,
-            availability_assumed=bool(hg is not None and not available), date_only=date_only,
-            home_stats=hs, away_stats=ast, source="csv", source_id=row.get("source_id"),
+            id=match_key(season, home, away),
+            season=season,
+            kickoff=kickoff,
+            home_team=home,
+            away_team=away,
+            status=row.get("status") or ("finished" if hg is not None else "scheduled"),
+            home_goals=hg,
+            away_goals=ag,
+            available_at=availability,
+            availability_assumed=bool(hg is not None and not available),
+            date_only=date_only,
+            home_stats=hs,
+            away_stats=ast,
+            source="csv",
+            source_id=row.get("source_id"),
         )
 
     def results(self) -> list[Match]:
@@ -104,12 +124,19 @@ class FootballDataAPIProvider:
             raise ValueError("Set FOOTBALL_DATA_TOKEN or import a fixture CSV")
 
     def _fetch(self, status: str) -> list[Match]:
+        assert self.token is not None
         with httpx.Client(timeout=30, headers={"X-Auth-Token": self.token}) as client:
-            response = client.get("https://api.football-data.org/v4/competitions/PL/matches", params={"status": status})
+            response = client.get(
+                "https://api.football-data.org/v4/competitions/PL/matches",
+                params={"status": status},
+            )
             if response.status_code == 429:
                 delay = min(60, int(response.headers.get("Retry-After", "6")))
                 time.sleep(delay)
-                response = client.get("https://api.football-data.org/v4/competitions/PL/matches", params={"status": status})
+                response = client.get(
+                    "https://api.football-data.org/v4/competitions/PL/matches",
+                    params={"status": status},
+                )
             response.raise_for_status()
             records = response.json()["matches"]
         result = []
@@ -120,14 +147,21 @@ class FootballDataAPIProvider:
             home, away = team_name(row["homeTeam"]["name"]), team_name(row["awayTeam"]["name"])
             finished = row["status"] == "FINISHED"
             goals = row["score"]["fullTime"]
-            result.append(Match(
-                id=match_key(season, home, away), season=season, kickoff=kickoff,
-                home_team=home, away_team=away, status="finished" if finished else "scheduled",
-                home_goals=goals["home"] if finished else None,
-                away_goals=goals["away"] if finished else None,
-                available_at=datetime.now(UTC) if finished else None,
-                source="football-data.org", source_id=str(row["id"]),
-            ))
+            result.append(
+                Match(
+                    id=match_key(season, home, away),
+                    season=season,
+                    kickoff=kickoff,
+                    home_team=home,
+                    away_team=away,
+                    status="finished" if finished else "scheduled",
+                    home_goals=goals["home"] if finished else None,
+                    away_goals=goals["away"] if finished else None,
+                    available_at=datetime.now(UTC) if finished else None,
+                    source="football-data.org",
+                    source_id=str(row["id"]),
+                )
+            )
         return result
 
     def results(self) -> list[Match]:

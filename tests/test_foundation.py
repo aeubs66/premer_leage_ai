@@ -8,4 +8,7 @@ def test_config():
 
 
 def test_database_path(tmp_path):
-    assert Settings(root=tmp_path).db_url() == "sqlite:///" + (tmp_path / "data/football.db").as_posix()
+    assert (
+        Settings(root=tmp_path).db_url()
+        == "sqlite:///" + (tmp_path / "data/football.db").as_posix()
+    )

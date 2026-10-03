@@ -9,6 +9,7 @@ __pycache__/
 /models/
 /reports/
 /mlruns/
+/work/
 *.db
 *.db-*
 frontend/node_modules/

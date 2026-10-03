@@ -1,11 +1,11 @@
 import numpy as np
 import pandas as pd
 import pytest
+from test_data import match
 
 from football_ai.config import Settings
 from football_ai.features.elo import Elo
 from football_ai.features.pipeline import FeaturePipeline
-from test_data import match
 
 
 def pipeline():
@@ -15,14 +15,19 @@ def pipeline():
 def test_current_and_future_mutations_do_not_change_past_features():
     records = [match(i, hg=i % 3) for i in range(8)]
     expected = pipeline().transform(records)
-    changed = [r.model_copy(update={"home_goals": 12, "home_stats": {"xg": 50}}) if i >= 3 else r for i, r in enumerate(records)]
+    changed = [
+        r.model_copy(update={"home_goals": 12, "home_stats": {"xg": 50}}) if i >= 3 else r
+        for i, r in enumerate(records)
+    ]
     actual = pipeline().transform(changed)
     pd.testing.assert_frame_equal(expected.iloc[:4], actual.iloc[:4])
 
 
 def test_simultaneous_and_unavailable_results():
     first, second = match(0), match(1)
-    second = second.model_copy(update={"kickoff": first.kickoff, "available_at": first.available_at})
+    second = second.model_copy(
+        update={"kickoff": first.kickoff, "available_at": first.available_at}
+    )
     features = pipeline().transform([first, second])
     assert (features.home_history_count == 0).all()
     assert features.home_gf_3.isna().all()
@@ -35,7 +40,11 @@ def test_form_and_inference_share_engine():
     features = pipeline().transform(records)
     assert features.loc["4", "home_history_count"] == 4
     assert features.loc["4", "home_gf_3"] == pytest.approx(1)
-    pd.testing.assert_series_equal(features.loc["4"], pipeline().for_fixture(records[:4], records[4]).iloc[0], check_names=False)
+    pd.testing.assert_series_equal(
+        features.loc["4"],
+        pipeline().for_fixture(records[:4], records[4]).iloc[0],
+        check_names=False,
+    )
 
 
 def test_elo_update_conserves_rating_and_season_shrinkage():

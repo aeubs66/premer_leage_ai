@@ -7,13 +7,25 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 ALIASES = {
-    "Man City": "Manchester City", "Man United": "Manchester United",
-    "Manchester United FC": "Manchester United", "Manchester City FC": "Manchester City",
-    "Tottenham": "Tottenham Hotspur", "Spurs": "Tottenham Hotspur",
-    "Wolves": "Wolverhampton Wanderers", "West Ham": "West Ham United",
-    "Nott'm Forest": "Nottingham Forest", "Newcastle": "Newcastle United",
-    "Brighton": "Brighton & Hove Albion", "Leicester": "Leicester City",
-    "Leeds": "Leeds United", "Sheffield United": "Sheffield United",
+    "AFC Bournemouth": "Bournemouth",
+    "Ipswich Town": "Ipswich",
+    "Luton Town": "Luton",
+    "Coventry City": "Coventry",
+    "Hull City": "Hull",
+    "Man City": "Manchester City",
+    "Man United": "Manchester United",
+    "Manchester United FC": "Manchester United",
+    "Manchester City FC": "Manchester City",
+    "Tottenham": "Tottenham Hotspur",
+    "Spurs": "Tottenham Hotspur",
+    "Wolves": "Wolverhampton Wanderers",
+    "West Ham": "West Ham United",
+    "Nott'm Forest": "Nottingham Forest",
+    "Newcastle": "Newcastle United",
+    "Brighton": "Brighton & Hove Albion",
+    "Leicester": "Leicester City",
+    "Leeds": "Leeds United",
+    "Sheffield United": "Sheffield United",
 }
 
 
@@ -65,11 +77,23 @@ class Match(BaseModel):
         return self
 
     @property
+    def result_available_at(self) -> datetime:
+        if self.available_at is None:
+            raise ValueError("Match has no result availability timestamp")
+        return self.available_at
+
+    @property
     def outcome(self) -> int:
         if self.status != "finished":
             raise ValueError("Match has no result")
         assert self.home_goals is not None and self.away_goals is not None
-        return 0 if self.home_goals > self.away_goals else 1 if self.home_goals == self.away_goals else 2
+        return (
+            0
+            if self.home_goals > self.away_goals
+            else 1
+            if self.home_goals == self.away_goals
+            else 2
+        )
 
 
 class Observation(BaseModel):

@@ -4,7 +4,9 @@ import math
 
 
 class Elo:
-    def __init__(self, initial=1500.0, k=20.0, home_advantage=65.0, season_retention=0.75, goal_margin=False):
+    def __init__(
+        self, initial=1500.0, k=20.0, home_advantage=65.0, season_retention=0.75, goal_margin=False
+    ):
         self.initial, self.k, self.home_advantage = initial, k, home_advantage
         self.retention, self.goal_margin = season_retention, goal_margin
         self.ratings: dict[str, float] = {}
@@ -15,7 +17,7 @@ class Elo:
         previous = self.seasons.get(team, season)
         if previous != season:
             gaps = max(1, int(season[:4]) - int(previous[:4]))
-            rating = self.initial + self.retention ** gaps * (rating - self.initial)
+            rating = self.initial + self.retention**gaps * (rating - self.initial)
         return rating
 
     def expected(self, home: str, away: str, season: str) -> float:
@@ -25,7 +27,11 @@ class Elo:
     def update(self, home: str, away: str, season: str, home_goals: int, away_goals: int) -> None:
         expected = self.expected(home, away, season)
         actual = 1.0 if home_goals > away_goals else 0.5 if home_goals == away_goals else 0.0
-        multiplier = math.log1p(abs(home_goals - away_goals)) if self.goal_margin and home_goals != away_goals else 1.0
+        multiplier = (
+            math.log1p(abs(home_goals - away_goals))
+            if self.goal_margin and home_goals != away_goals
+            else 1.0
+        )
         change = self.k * multiplier * (actual - expected)
         self.ratings[home] = self.rating(home, season) + change
         self.ratings[away] = self.rating(away, season) - change

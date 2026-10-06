@@ -65,6 +65,9 @@ export type Prediction = {
     historical_availability_assumed: boolean;
   };
   model_version: string;
+  dataset_version?: string;
+  feature_version?: string;
+  features_as_of?: string;
   generated_at: string;
   warning: string;
   result: { home_goals: number; away_goals: number; log_loss: number } | null;
@@ -126,9 +129,9 @@ export const modelName = (name: string) =>
   ({
     elo: "Elo",
     poisson: "Poisson",
-    dixon_coles: "Dixonâ€“Coles",
+    dixon_coles: "Dixon–Coles",
     xgboost: "XGBoost",
-    xgboost_no_h2h: "XGBoost Â· no H2H",
+    xgboost_no_h2h: "XGBoost · no H2H",
     neural: "Neural network",
     frequency: "League frequency",
     home_baseline: "Home baseline",

@@ -1377,3 +1377,44 @@ main > .page-heading {
         font-size: 21px;
     }
 }
+.probability-provenance h2:not(:first-child) {
+    margin-top: 28px;
+}
+.evidence-steps {
+    padding-left: 24px;
+}
+.evidence-steps li {
+    padding-left: 8px;
+    margin-bottom: 18px;
+}
+.evidence-steps li::marker {
+    color: var(--accent);
+}
+.provenance-table {
+    overflow-x: auto;
+}
+.provenance-table td:first-child {
+    min-width: 190px;
+    max-width: 430px;
+}
+.provenance-table td small {
+    display: block;
+    margin-top: 6px;
+    color: var(--muted);
+    line-height: 1.5;
+}
+.forecast-lineage {
+    display: grid;
+    grid-template-columns: minmax(120px, 1fr) minmax(0, 3fr);
+    gap: 12px 18px;
+    font-size: 12px;
+    border-top: 1px solid var(--border);
+    padding-top: 20px;
+}
+.forecast-lineage dt {
+    color: var(--muted);
+}
+.forecast-lineage dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+}

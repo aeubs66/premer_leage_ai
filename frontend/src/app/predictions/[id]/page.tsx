@@ -6,6 +6,7 @@ import { ArrowLeft, Info } from "lucide-react";
 import { api, modelName, percent, Prediction } from "@/lib/api";
 import { MetricCard, StateBox } from "@/components/shell";
 import { PredictionCharts } from "@/components/prediction-charts";
+import { ProbabilityProvenance } from "@/components/probability-provenance";
 import { ForecastSection } from "@/components/forecast-section";
 import { TeamBadge } from "@/components/team-badge";
 
@@ -84,6 +85,7 @@ export default function PredictionPage({
                     ))}
                 </div>
             </div>
+            <ProbabilityProvenance prediction={p} />
             <div className="two-columns forecast-overview">
                 <section className="panel">
                     <h2>Most likely scores</h2>

@@ -11,9 +11,10 @@ import {
     BarChart,
     Bar,
 } from "recharts";
+import { useMotionAllowed } from "@/lib/motion";
 import { CalibrationBin, FormMatch } from "@/lib/api";
 
-const grid = "#dfd5c6";
+const grid = "#484137";
 export function HistoryChart({
     matches,
     kind,
@@ -21,6 +22,7 @@ export function HistoryChart({
     matches: FormMatch[];
     kind: "elo" | "goals" | "xg" | "form";
 }) {
+    const animate = useMotionAllowed();
     const data = matches.map((m) => ({
         ...m,
         date: new Date(m.kickoff).toLocaleDateString("en-GB", {
@@ -35,11 +37,11 @@ export function HistoryChart({
                     <CartesianGrid stroke={grid} vertical={false} />
                     <XAxis
                         dataKey="date"
-                        tick={{ fill: "#786957", fontSize: 11 }}
+                        tick={{ fill: "#b0a391", fontSize: 11 }}
                         minTickGap={35}
                     />
                     <YAxis
-                        tick={{ fill: "#786957", fontSize: 11 }}
+                        tick={{ fill: "#b0a391", fontSize: 11 }}
                         domain={
                             kind === "elo"
                                 ? ["dataMin - 20", "dataMax + 20"]
@@ -48,12 +50,14 @@ export function HistoryChart({
                     />
                     <Tooltip
                         contentStyle={{
-                            background: "#fffcf4",
-                            border: "1px solid #d8c9b2",
+                            background: "#28241f",
+                            border: "1px solid #5b4b3c",
                             borderRadius: 8,
                         }}
                     />
                     <Line
+                        isAnimationActive={animate}
+                        animationDuration={650}
                         type="monotone"
                         dataKey={
                             kind === "elo"
@@ -64,16 +68,18 @@ export function HistoryChart({
                                     ? "xg"
                                     : "points"
                         }
-                        stroke="#803c3c"
+                        stroke="#c8867c"
                         strokeWidth={2.5}
                         dot={false}
                         connectNulls={false}
                     />
                     {["goals", "xg"].includes(kind) && (
                         <Line
+                            isAnimationActive={animate}
+                            animationDuration={650}
                             type="monotone"
                             dataKey={kind === "goals" ? "goals_against" : "xga"}
-                            stroke="#bf7d35"
+                            stroke="#d3a166"
                             strokeWidth={2}
                             dot={false}
                             connectNulls={false}
@@ -86,6 +92,7 @@ export function HistoryChart({
 }
 
 export function CalibrationChart({ bins }: { bins: CalibrationBin[] }) {
+    const animate = useMotionAllowed();
     const data = bins
         .filter((b) => b.count)
         .map((b) => ({
@@ -103,24 +110,28 @@ export function CalibrationChart({ bins }: { bins: CalibrationBin[] }) {
                         dataKey="predicted"
                         type="number"
                         domain={[0, 1]}
-                        tick={{ fill: "#786957" }}
+                        tick={{ fill: "#b0a391" }}
                     />
-                    <YAxis domain={[0, 1]} tick={{ fill: "#786957" }} />
+                    <YAxis domain={[0, 1]} tick={{ fill: "#b0a391" }} />
                     <Tooltip
                         contentStyle={{
-                            background: "#fffcf4",
-                            border: "1px solid #d8c9b2",
+                            background: "#28241f",
+                            border: "1px solid #5b4b3c",
                         }}
                     />
                     <Line
+                        isAnimationActive={animate}
+                        animationDuration={650}
                         dataKey="ideal"
-                        stroke="#aa9e8b"
+                        stroke="#827665"
                         strokeDasharray="5 5"
                         dot={false}
                     />
                     <Line
+                        isAnimationActive={animate}
+                        animationDuration={650}
                         dataKey="observed"
-                        stroke="#803c3c"
+                        stroke="#c8867c"
                         strokeWidth={2.5}
                     />
                 </LineChart>
@@ -134,6 +145,7 @@ export function ComparisonChart({
 }: {
     data: { name: string; log_loss: number }[];
 }) {
+    const animate = useMotionAllowed();
     return (
         <div className="chart">
             <ResponsiveContainer
@@ -144,23 +156,25 @@ export function ComparisonChart({
                     <CartesianGrid stroke={grid} horizontal={false} />
                     <XAxis
                         type="number"
-                        tick={{ fill: "#786957", fontSize: 11 }}
+                        tick={{ fill: "#b0a391", fontSize: 11 }}
                     />
                     <YAxis
                         type="category"
                         dataKey="name"
                         width={150}
-                        tick={{ fill: "#625549", fontSize: 12 }}
+                        tick={{ fill: "#c0b19e", fontSize: 12 }}
                     />
                     <Tooltip
                         contentStyle={{
-                            background: "#fffcf4",
-                            border: "1px solid #d8c9b2",
+                            background: "#28241f",
+                            border: "1px solid #5b4b3c",
                         }}
                     />
                     <Bar
+                        isAnimationActive={animate}
+                        animationDuration={650}
                         dataKey="log_loss"
-                        fill="#803c3c"
+                        fill="#c8867c"
                         radius={[0, 4, 4, 0]}
                     />
                 </BarChart>

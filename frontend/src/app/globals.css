@@ -1,15 +1,16 @@
 @import "tailwindcss";
 
 :root {
-    --bg: #f1ede4;
-    --panel: #fffcf4;
-    --panel2: #eae2d5;
-    --border: #d8cdbb;
-    --text: #29251f;
-    --muted: #736556;
-    --mint: #803c3c;
-    --purple: #9b5e28;
-    --accent: #c27c38;
+    color-scheme: dark;
+    --bg: #171613;
+    --panel: #211f1c;
+    --panel2: #34302a;
+    --border: #484137;
+    --text: #eee5d6;
+    --muted: #b0a391;
+    --mint: #d29484;
+    --purple: #d4aa72;
+    --accent: #c99455;
     --serif: Georgia, "Times New Roman", serif;
     --sans: "Trebuchet MS", Arial, sans-serif;
 }
@@ -289,7 +290,7 @@ main {
     padding: 42px 48px;
     position: relative;
     overflow: hidden;
-    background: #643131;
+    background: #3d2526;
     color: #fff4df;
 }
 .hero-story::after {
@@ -512,14 +513,14 @@ main {
     top: 64px;
     left: 17px;
     font: italic 48px var(--serif);
-    color: #d8cbb7;
+    color: #5d5043;
     opacity: 0.55;
     pointer-events: none;
 }
 .fixture-card:hover {
     transform: translateY(-4px);
-    box-shadow: 5px 7px 0 #d9cbb855;
-    border-color: #b29176;
+    box-shadow: 5px 7px 0 #0b090955;
+    border-color: #92674e;
 }
 .fixture-meta {
     display: flex;
@@ -578,17 +579,17 @@ main {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    border: 1px solid #ba9b85;
+    border: 1px solid #685043;
     color: var(--mint);
-    background: #eee1d4;
+    background: #392b28;
     border-radius: 50%;
     font-size: 12px;
     font-weight: 700;
 }
 .team-badge.away {
-    background: #e9dfc6;
+    background: #3d3324;
     color: var(--purple);
-    border-color: #c5b28b;
+    border-color: #715c3e;
 }
 .team-badge.large {
     height: 70px;
@@ -596,9 +597,9 @@ main {
     font-size: 19px;
 }
 .team-badge.has-crest {
-    background: transparent;
-    border: 0;
-    padding: 3px;
+    background: #eee5d6;
+    border: 1px solid #9a8872;
+    padding: 7px;
 }
 .team-badge.has-crest img {
     width: 100%;
@@ -606,7 +607,7 @@ main {
     object-fit: contain;
 }
 .team-badge.large.has-crest {
-    padding: 3px;
+    padding: 10px;
 }
 .predict-button {
     width: calc(100% + 46px);
@@ -720,7 +721,7 @@ main {
     display: inline-flex;
     gap: 8px;
     align-items: center;
-    border: 1px solid #b38a72;
+    border: 1px solid #785847;
     padding: 9px 12px;
     font-size: 9px;
     line-height: 1.5;
@@ -793,7 +794,7 @@ main {
     background: var(--mint);
 }
 .p1 .probability-track i {
-    background: #8e9166;
+    background: #a5aa83;
 }
 .p2 .probability-track i {
     background: var(--accent);
@@ -861,7 +862,7 @@ th {
 }
 td {
     padding: 16px 8px 16px 0;
-    border-bottom: 1px solid #e5ddd0;
+    border-bottom: 1px solid #3c362e;
 }
 th:not(:first-child),
 td:not(:first-child) {
@@ -924,7 +925,7 @@ td:not(:first-child) {
 }
 .recharts-default-tooltip {
     color: var(--text) !important;
-    box-shadow: 0 4px 15px #5a3b2420;
+    box-shadow: 0 4px 15px #00000055;
 }
 .recipe {
     display: flex;
@@ -964,17 +965,17 @@ td:not(:first-child) {
     justify-content: center;
     height: 25px;
     width: 25px;
-    background: #e2dbc9;
+    background: #393329;
     color: var(--muted);
     font-size: 10px;
 }
 .form-badge.W {
-    background: #ede1c2;
-    color: #67562e;
-    border-bottom: 2px solid #88723c;
+    background: #3a3525;
+    color: #d9c28a;
+    border-bottom: 2px solid #b6a267;
 }
 .form-badge.L {
-    background: #efdbd7;
+    background: #412a29;
     color: var(--mint);
     border-bottom: 2px solid var(--mint);
 }
@@ -1187,6 +1188,91 @@ td:not(:first-child) {
         padding: 20px;
         gap: 16px;
     }
+}
+@keyframes journal-enter {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+@keyframes ink-unfold {
+    from {
+        transform: scaleX(0);
+    }
+    to {
+        transform: scaleX(1);
+    }
+}
+@keyframes orbit-drift {
+    from {
+        transform: translate(0, 0);
+        opacity: 0.6;
+    }
+    to {
+        transform: translate(-16px, -12px);
+        opacity: 1;
+    }
+}
+main > .page-heading {
+    animation: journal-enter 0.6s ease backwards;
+}
+.hero-panel,
+.prediction-hero,
+.team-heading {
+    animation: journal-enter 0.65s ease 0.08s backwards;
+}
+.metric-card {
+    animation: journal-enter 0.55s ease 0.12s backwards;
+}
+.metric-card:nth-child(2) {
+    animation-delay: 0.18s;
+}
+.metric-card:nth-child(3) {
+    animation-delay: 0.24s;
+}
+.metric-card:nth-child(4) {
+    animation-delay: 0.3s;
+}
+.fixture-card {
+    animation: journal-enter 0.55s ease backwards;
+}
+.two-columns > .panel {
+    animation: journal-enter 0.55s ease backwards;
+}
+.two-columns > .panel:nth-child(even) {
+    animation-delay: 0.08s;
+}
+.hero-story::after {
+    animation: orbit-drift 14s ease-in-out infinite alternate;
+}
+.probability-track i {
+    transform-origin: left;
+    animation: ink-unfold 0.7s ease backwards;
+}
+.brand-mark {
+    transition:
+        transform 0.25s ease,
+        border-color 0.25s ease;
+}
+.brand:hover .brand-mark {
+    transform: rotate(-4deg);
+    border-color: var(--accent);
+}
+.featured-button svg {
+    transition: transform 0.2s ease;
+}
+.featured-button:hover svg {
+    transform: translate(3px, -3px);
+}
+.matchday-filters button {
+    transition:
+        background 0.2s,
+        color 0.2s,
+        border-color 0.2s;
 }
 @media (prefers-reduced-motion: reduce) {
     html {

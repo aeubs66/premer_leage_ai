@@ -12,17 +12,18 @@ import {
     XAxis,
     YAxis,
 } from "recharts";
+import { useMotionAllowed } from "@/lib/motion";
 import { modelName, Prediction } from "@/lib/api";
 
-const homeColor = "#803c3c";
-const awayColor = "#bf7d35";
-const drawColor = "#8e9166";
-const tick = { fill: "#625549", fontSize: 11 };
+const homeColor = "#c8867c";
+const awayColor = "#d3a166";
+const drawColor = "#a5aa83";
+const tick = { fill: "#c0b19e", fontSize: 11 };
 const tooltipStyle = {
-    background: "#fffcf4",
-    border: "1px solid #d8c9b2",
+    background: "#28241f",
+    border: "1px solid #5b4b3c",
     borderRadius: 8,
-    color: "#29251f",
+    color: "#eee5d6",
 };
 const percentage = (v: number) => `${v}%`;
 const pct = (v: number) => Number((v * 100).toFixed(2));
@@ -54,6 +55,7 @@ function HorizontalChart({
     percent?: boolean;
     height?: number;
 }) {
+    const animate = useMotionAllowed();
     return (
         <div
             className="chart"
@@ -68,7 +70,7 @@ function HorizontalChart({
                     layout="vertical"
                     margin={{ left: 0, right: 24, bottom: 12 }}
                 >
-                    <CartesianGrid stroke="#dfd5c6" horizontal={false} />
+                    <CartesianGrid stroke="#484137" horizontal={false} />
                     <XAxis
                         type="number"
                         domain={percent ? [0, 100] : undefined}
@@ -86,6 +88,8 @@ function HorizontalChart({
                         formatter={(value) => `${value}${percent ? "%" : ""}`}
                     />
                     <Bar
+                        isAnimationActive={animate}
+                        animationDuration={650}
                         dataKey="value"
                         name={percent ? "Probability" : "Value"}
                         radius={[0, 4, 4, 0]}
@@ -105,6 +109,7 @@ export function PredictionCharts({
 }: {
     prediction: Prediction;
 }) {
+    const animate = useMotionAllowed();
     const home = p.match.home_team;
     const away = p.match.away_team;
     const outcomes = [
@@ -139,7 +144,7 @@ export function PredictionCharts({
                         ),
                 ),
             ),
-            color: "#988c7a",
+            color: "#998d7c",
         },
     ];
     const models = [
@@ -195,7 +200,7 @@ export function PredictionCharts({
             <div className="chart">
                 <ResponsiveContainer width="100%" height={270}>
                     <BarChart data={data} margin={{ bottom: 12, right: 16 }}>
-                        <CartesianGrid stroke="#dfd5c6" vertical={false} />
+                        <CartesianGrid stroke="#484137" vertical={false} />
                         <XAxis dataKey="name" tick={tick} />
                         <YAxis tick={tick} domain={[0, "auto"]} />
                         <Tooltip
@@ -208,12 +213,16 @@ export function PredictionCharts({
                         />
                         <Legend />
                         <Bar
+                            isAnimationActive={animate}
+                            animationDuration={650}
                             dataKey="home"
                             name={home}
                             fill={homeColor}
                             radius={[4, 4, 0, 0]}
                         />
                         <Bar
+                            isAnimationActive={animate}
+                            animationDuration={650}
                             dataKey="away"
                             name={away}
                             fill={awayColor}
@@ -261,7 +270,7 @@ export function PredictionCharts({
                         <ResponsiveContainer width="100%" height={290}>
                             <BarChart data={goals}>
                                 <CartesianGrid
-                                    stroke="#dfd5c6"
+                                    stroke="#484137"
                                     vertical={false}
                                 />
                                 <XAxis
@@ -281,11 +290,15 @@ export function PredictionCharts({
                                 />
                                 <Legend />
                                 <Bar
+                                    isAnimationActive={animate}
+                                    animationDuration={650}
                                     dataKey="home"
                                     name={home}
                                     fill={homeColor}
                                 />
                                 <Bar
+                                    isAnimationActive={animate}
+                                    animationDuration={650}
                                     dataKey="away"
                                     name={away}
                                     fill={awayColor}
@@ -309,7 +322,7 @@ export function PredictionCharts({
                                 margin={{ right: 16 }}
                             >
                                 <CartesianGrid
-                                    stroke="#dfd5c6"
+                                    stroke="#484137"
                                     horizontal={false}
                                 />
                                 <XAxis
@@ -330,18 +343,24 @@ export function PredictionCharts({
                                 />
                                 <Legend />
                                 <Bar
+                                    isAnimationActive={animate}
+                                    animationDuration={650}
                                     dataKey="home"
                                     name={home}
                                     stackId="outcome"
                                     fill={homeColor}
                                 />
                                 <Bar
+                                    isAnimationActive={animate}
+                                    animationDuration={650}
                                     dataKey="draw"
                                     name="Draw"
                                     stackId="outcome"
                                     fill={drawColor}
                                 />
                                 <Bar
+                                    isAnimationActive={animate}
+                                    animationDuration={650}
                                     dataKey="away"
                                     name={away}
                                     stackId="outcome"
@@ -398,7 +417,7 @@ export function PredictionCharts({
                                     margin={{ right: 16 }}
                                 >
                                     <CartesianGrid
-                                        stroke="#dfd5c6"
+                                        stroke="#484137"
                                         horizontal={false}
                                     />
                                     <XAxis type="number" tick={tick} />
@@ -408,7 +427,7 @@ export function PredictionCharts({
                                         width={155}
                                         tick={tick}
                                     />
-                                    <ReferenceLine x={0} stroke="#786957" />
+                                    <ReferenceLine x={0} stroke="#b0a391" />
                                     <Tooltip
                                         contentStyle={tooltipStyle}
                                         formatter={(value) =>
@@ -418,6 +437,8 @@ export function PredictionCharts({
                                         }
                                     />
                                     <Bar
+                                        isAnimationActive={animate}
+                                        animationDuration={650}
                                         dataKey="value"
                                         name="Logit contribution"
                                     >

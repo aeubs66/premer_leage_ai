@@ -256,9 +256,12 @@ export default function Dashboard() {
                     </StateBox>
                 )}
                 <div className="fixture-grid">
-                    {filtered?.map((f) => (
+                    {filtered?.map((f, index) => (
                         <article
                             className="fixture-card"
+                            style={{
+                                animationDelay: `${Math.min(index, 7) * 55}ms`,
+                            }}
                             key={f.id}
                             aria-label={`${f.home_team} vs ${f.away_team}`}
                         >

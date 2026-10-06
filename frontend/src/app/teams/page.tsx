@@ -93,7 +93,7 @@ export default function Teams() {
                         <section className="panel">
                             <h2>Goals scored & conceded</h2>
                             <p className="muted">
-                                Oxblood: scored · Ochre: conceded
+                                Terracotta: scored · Copper: conceded
                             </p>
                             <HistoryChart matches={matches} kind="goals" />
                         </section>

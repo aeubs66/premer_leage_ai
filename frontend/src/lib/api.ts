@@ -129,9 +129,9 @@ export const modelName = (name: string) =>
   ({
     elo: "Elo",
     poisson: "Poisson",
-    dixon_coles: "Dixon–Coles",
+    dixon_coles: "Dixonâ€“Coles",
     xgboost: "XGBoost",
-    xgboost_no_h2h: "XGBoost · no H2H",
+    xgboost_no_h2h: "XGBoost Â· no H2H",
     neural: "Neural network",
     frequency: "League frequency",
     home_baseline: "Home baseline",

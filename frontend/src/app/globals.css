@@ -1298,3 +1298,82 @@ main > .page-heading {
 .skip-link:focus {
     top: 16px;
 }
+
+.forecast-overview {
+    align-items: stretch;
+}
+.forecast-goals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin: 0;
+}
+.forecast-goals .metric-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.forecast-section {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--panel);
+    margin: 14px 0;
+}
+.forecast-section > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 24px;
+    cursor: pointer;
+    list-style: none;
+}
+.forecast-section > summary::-webkit-details-marker {
+    display: none;
+}
+.forecast-section > summary strong {
+    display: block;
+    font-family: Georgia, serif;
+    font-size: 23px;
+    font-weight: 400;
+}
+.forecast-section > summary small {
+    display: block;
+    color: var(--muted);
+    margin-top: 6px;
+    line-height: 1.5;
+}
+.forecast-section > summary svg {
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+    color: var(--accent);
+}
+.forecast-section[open] > summary svg {
+    transform: rotate(180deg);
+}
+.forecast-section > summary:hover {
+    background: var(--panel2);
+    border-radius: 12px;
+}
+.forecast-section > summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+}
+.forecast-section-content {
+    padding: 0 24px 24px;
+}
+.forecast-section-content > .section-heading {
+    margin-top: 8px;
+}
+.forecast-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (max-width: 600px) {
+    .forecast-section > summary {
+        padding: 18px;
+    }
+    .forecast-section-content {
+        padding: 0 12px 12px;
+    }
+    .forecast-section > summary strong {
+        font-size: 21px;
+    }
+}

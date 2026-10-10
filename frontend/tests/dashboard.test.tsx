@@ -47,7 +47,9 @@ function mockBackend() {
                     ? { prediction_id: "saved-match" }
                     : url.includes("fixtures")
                       ? fixtures
-                      : { available: false },
+                      : url.includes("matches/recent")
+                        ? []
+                        : { available: false },
         }));
     vi.stubGlobal("fetch", fetcher);
     return fetcher;
@@ -84,9 +86,9 @@ describe("matchday browsing", () => {
             screen.getByRole("textbox", { name: "Search teams" }),
             { target: { value: "Liverpool" } },
         );
-        expect(screen.getByRole("status")).toHaveTextContent(
-            "No fixtures match this date and team search.",
-        );
+        expect(
+            screen.getByText("No fixtures match this date and team search."),
+        ).toHaveAttribute("role", "status");
         fireEvent.click(screen.getByRole("button", { name: /All matches/ }));
         expect(
             screen.getByRole("article", {

@@ -211,6 +211,16 @@ class Repository:
             payload["result"] = result
             return payload
 
+    def latest_prediction_ids(self) -> dict[str, str]:
+        """Link match cards to saved forecasts without creating post-kickoff predictions."""
+        with self.engine.connect() as connection:
+            rows = connection.execute(
+                select(db.Prediction.match_id, db.Prediction.id).order_by(
+                    db.Prediction.generated_at, db.Prediction.id
+                )
+            )
+            return {match_id: identifier for match_id, identifier in rows}
+
     def record_results(self):
         count = 0
         actuals = {

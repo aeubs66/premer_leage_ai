@@ -33,3 +33,13 @@ Verified disclosure opening, closing and reopening with Testing Library; all sev
 Added an expandable explanation directly below forecast probabilities. It displays only the contributing models and their saved outcome probabilities, the final forecast, chronological feature/recipe context, available-data coverage, publication-time assumptions, and saved lineage/cutoff. It explains probability interpretation and shows measured top-outcome calibration evidence only for bins with at least 30 examples. Component feature attributions are explicitly separated from final probability contributions; no model weights or exact additive ensemble explanations are invented. Older snapshots have explicit missing-lineage fallbacks.
 
 All nine frontend tests, lint, type checks and production build passed; the current forecast page returned HTTP 200. Browser visual inspection remains unavailable.
+
+## Recent results and saved forecast outcomes - 2026-10-10
+
+The home page previously fetched only future fixtures, making matches disappear at kickoff. Added GET /matches/recent with a bounded 30-day default and a separate results section with club badges, final scores, pending-result states, team search, refresh and five-minute reads of stored results. Final scores are hidden until their availability timestamp. Recent cards link to the latest saved pre-match forecast; forecasts now show separately attached actual results. No post-kickoff forecasts are created.
+
+Data updates now attach confirmed results automatically. The optional token-backed API update imports finished matches as well as scheduled fixtures. The default historical CSV was still current only through September 20 at this check. Imported five October 10 full-time results verified on https://www.skysports.com/football-scores-fixtures/2026-10-10 using the existing local CSV workflow; kept source URL/hash and first-observation availability in ignored local provenance files. No live or unconfirmed score was imported as final. Seven saved forecasts gained result attachments, and the Arsenal-Leeds original payload was checked unchanged. Five-minute frontend reads do not download new provider data: run update-data periodically or import results; token-backed providers can also be used. Results can be delayed by the provider.
+
+Targeted API, SQLite repository, feature/leakage and data tests: 13 passed, one PostgreSQL test skipped because no test server is configured. Live API checks verified five final results, saved-result attachment and successful homepage/forecast responses. Browser visual inspection is unavailable.
+
+Frontend verification: all 11 tests, lint, type checks and production build passed. Python lint and type checks passed.

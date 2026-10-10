@@ -49,6 +49,22 @@ export default function PredictionPage({
                     {p.uncertainty.label.toUpperCase()} CONFIDENCE
                 </span>
             </section>
+            {p.result && (
+                <section
+                    className="panel saved-result"
+                    aria-label="Actual match result"
+                >
+                    <span className="eyebrow">FULL TIME / ACTUAL RESULT</span>
+                    <h2>
+                        {p.match.home_team} {p.result.home_goals} -{" "}
+                        {p.result.away_goals} {p.match.away_team}
+                    </h2>
+                    <p className="muted">
+                        The forecast below was saved before kickoff and has not
+                        been changed to match the result.
+                    </p>
+                </section>
+            )}
             <div className="prediction-hero">
                 <div className="match-identity">
                     <TeamBadge team={p.match.home_team} large />

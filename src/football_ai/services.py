@@ -55,7 +55,8 @@ def update_data(
             if settings.football_data_token
             else None
         )
-        incoming += FootballDataAPIProvider(token).fixtures()
+        provider = FootballDataAPIProvider(token)
+        incoming += provider.results() + provider.fixtures()
     merged = {m.id: m for m in previous}
     added, changed = 0, 0
     for match in incoming:
@@ -73,6 +74,7 @@ def update_data(
     records = sorted(merged.values(), key=lambda m: (m.kickoff, m.id))
     version = save_snapshot(settings, records)
     repository.sync_matches(records)
+    attached_results = repository.record_results()
     frame, feature_version = feature_frame(settings, records, version, repository.observations())
     repository.save_features(records, frame, version, feature_version)
     from football_ai.database.models import data_sources
@@ -92,6 +94,7 @@ def update_data(
     summary = {
         "dataset_version": version,
         "records": len(records),
+        "attached_results": attached_results,
         "added": added,
         "changed": changed,
         "feature_version": feature_version,
@@ -119,6 +122,30 @@ def upcoming(repository, days=14):
         for m in repository.matches()
         if m.status == "scheduled" and now < m.kickoff <= now + timedelta(days=days)
     ]
+
+
+def recent_matches(repository, days=30):
+    """Keep started fixtures visible; only publish final scores once available."""
+    now = datetime.now(UTC)
+    links = repository.latest_prediction_ids()
+    rows = []
+    for match in repository.matches():
+        if not now - timedelta(days=days) <= match.kickoff <= now:
+            continue
+        payload = match.model_dump(mode="json")
+        confirmed = match.status == "finished" and match.result_available_at <= now
+        if not confirmed:
+            payload["home_goals"] = payload["away_goals"] = None
+        payload["display_status"] = (
+            "finished"
+            if confirmed
+            else match.status
+            if match.status in ("postponed", "cancelled")
+            else "awaiting_result"
+        )
+        payload["prediction_id"] = links.get(match.id)
+        rows.append(payload)
+    return sorted(rows, key=lambda row: (row["kickoff"], row["id"]), reverse=True)
 
 
 def team_form(repository, team, limit=20):

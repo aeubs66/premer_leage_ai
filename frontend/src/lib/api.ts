@@ -6,6 +6,14 @@ export type Fixture = {
   season: string;
   date_only: boolean;
 };
+export type RecentMatch = Fixture & {
+  display_status: "finished" | "awaiting_result" | "postponed" | "cancelled";
+  home_goals: number | null;
+  away_goals: number | null;
+  prediction_id: string | null;
+  source: string;
+  available_at: string | null;
+};
 export type Probabilities = { home: number; draw: number; away: number };
 export type CalibrationBin = {
   lower: number;

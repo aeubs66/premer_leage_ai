@@ -46,3 +46,9 @@ Set `FOOTBALL_AI_DATABASE_URL=postgresql+psycopg://USER:PASSWORD@HOST/DATABASE` 
 The database and trained model binaries are ignored by Git. To preserve saved predictions and results on another PC, stop the API and make a private local backup of `data/football.db`, `models/`, and `data/processed/`; restore those files only into the matching project version. Keep `.env`, credentials, raw downloads, caches, reports, and MLflow files separate. The project currently does not provide a versioned export/import tool.
 
 See [reproducibility.md](reproducibility.md) for the ignored-file inventory and recovery notes.
+
+### Viewing played matches
+
+The homepage's Recent matches & results section retains matches from the last 30 days after kickoff. It displays final scores only once the result is available; otherwise it says Awaiting confirmed result. Refresh results and automatic five-minute checks read the local database, not a live score feed.
+
+Update provider data with `football-ai update-data` (or `python -m football_ai update-data`). Updates attach confirmed results to saved forecasts automatically. With FOOTBALL_DATA_TOKEN configured, `update-data --api-fixtures` also imports API results. If a provider has not published today's results, import a verified CSV with `update-data --csv PATH --offline`. Use explicit UTC kickoff and available_at timestamps, canonical teams, season, status=finished, home_goals and away_goals; availability should be the time the result was actually observed, never backdated. Original forecasts stay immutable. Existing `record-results` remains available for attaching results already in storage.

@@ -1418,3 +1418,44 @@ main > .page-heading {
     margin: 0;
     overflow-wrap: anywhere;
 }
+#results {
+    margin-top: 44px;
+}
+.results-tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 22px;
+}
+.results-tools input {
+    max-width: 280px;
+}
+.results-tools small {
+    flex: 1;
+    min-width: 220px;
+    line-height: 1.6;
+}
+.result-score {
+    color: var(--accent);
+    white-space: nowrap;
+    font-family: Georgia, serif;
+    font-size: 26px;
+}
+.result-status {
+    color: var(--accent);
+}
+.result-card .predict-button {
+    display: flex;
+    justify-content: center;
+    text-decoration: none;
+}
+.result-card > small {
+    display: block;
+    margin-top: 14px;
+    font-size: 10px;
+}
+.saved-result {
+    margin-bottom: 22px;
+    border-color: var(--accent);
+}

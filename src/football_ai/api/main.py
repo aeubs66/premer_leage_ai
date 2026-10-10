@@ -10,7 +10,7 @@ from football_ai.config import Settings
 from football_ai.data.schemas import team_name
 from football_ai.database.repository import Repository
 from football_ai.inference.predictor import Predictor
-from football_ai.services import evaluate_saved, team_form, upcoming
+from football_ai.services import evaluate_saved, recent_matches, team_form, upcoming
 from football_ai.training.registry import LocalRegistry
 
 
@@ -42,6 +42,10 @@ def create_app(settings: Settings | None = None):
     @app.get("/fixtures/upcoming")
     def fixtures(days: int = Query(default=14, ge=1, le=365)):
         return [m.model_dump(mode="json") for m in upcoming(repository, days)]
+
+    @app.get("/matches/recent")
+    def results(days: int = Query(default=30, ge=1, le=365)):
+        return recent_matches(repository, days)
 
     @app.post("/predict", response_model=PredictionResponse)
     def predict(request: PredictRequest):

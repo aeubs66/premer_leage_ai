@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { api, Fixture, Performance, Prediction, percent } from "@/lib/api";
 import { MetricCard, StateBox } from "@/components/shell";
+import { RecentResults } from "@/components/recent-results";
 import { TeamBadge } from "@/components/team-badge";
 
 export default function Dashboard() {
@@ -315,6 +316,7 @@ export default function Dashboard() {
                     ))}
                 </div>
             </section>
+            <RecentResults />
             <div className="bottom-note">
                 <ShieldCheck size={22} />
                 <div>

@@ -1,130 +1,219 @@
-# Premier League AI
+<p align="center">
+  <img src="docs/assets/football-lab-cover.svg" alt="Premier League AI — Football, with a probability. An independent football lab. Editorial pitch artwork." width="100%" />
+</p>
 
-A leakage-aware Premier League forecasting platform that combines statistical models, machine learning, probability evaluation, chronological backtesting, FastAPI, and a Next.js research dashboard.
+<p align="center">
+  <strong>A personal football project with a research mindset.</strong><br />
+  Match probabilities, expected goals, and score distributions—backed by chronological evaluation.
+</p>
 
-**Educational and research project; not a betting system.** Football outcomes are uncertain, and forecast quality is not guaranteed.
+<p align="center">
+  <a href="#01--the-matchday-view"><strong>The experience</strong></a>
+  &nbsp; / &nbsp;
+  <a href="#02--the-research-record">Measured results</a>
+  &nbsp; / &nbsp;
+  <a href="#03--inside-the-model-room">Model room</a>
+  &nbsp; / &nbsp;
+  <a href="#05--run-the-lab">Run locally</a>
+  &nbsp; / &nbsp;
+  <a href="docs/study-guide.md">Study guide ↗</a>
+</p>
 
-## Overview
+<p align="center">
+  <a href=".github/workflows/ci.yml"><img src="https://github.com/aeubs66/premer_leage_ai/actions/workflows/ci.yml/badge.svg?branch=master" alt="Repository CI status" /></a>
+  <img src="https://img.shields.io/badge/Python-3.12-c99455?style=flat-square&amp;labelColor=211f1c" alt="Python 3.12" />
+  <img src="https://img.shields.io/badge/Compute-CPU_first-d29484?style=flat-square&amp;labelColor=211f1c" alt="CPU first" />
+  <img src="https://img.shields.io/badge/Evaluation-Chronological-d4aa72?style=flat-square&amp;labelColor=211f1c" alt="Chronological evaluation" />
+</p>
 
-The platform estimates home/draw/away probabilities, expected goals, and score distributions for historical evaluations and real scheduled fixtures. It reports calibration, uncertainty, model disagreement, and explanations alongside measured model comparisons and saved pre-kickoff predictions.
+---
 
-## Measured results
+## 01 / The matchday view
 
-The versioned [dataset manifest](docs/dataset-manifest.json) records the five real Football-Data seasons used for the original training run. That snapshot contains 1,570 match records. On the sealed 2025/2026 test season (380 matches), the selected recipe scored **1.0303 log loss**, **0.6195 Brier score**, and **47.37% winner accuracy**. Its separate monthly frozen-recipe walk-forward scored 1.0264 log loss and 48.16% accuracy. The [verification report](docs/verification.md) describes these measurements and their limits. The final test did not select the model. These are historical measurements, not a promise about future forecasts.
+Football is unpredictable. This project explores how much useful signal can be extracted from past results, team strength, and recent form—and how honestly that signal can be measured.
 
-## Models
+The platform connects a Python forecasting pipeline to a FastAPI service and a Next.js dashboard. It is an independent personal project for football interest and experimentation, with a documented evaluation process.
 
-The system compares simple home and frequency baselines, previous-season priors, Elo, regularized Poisson and optional Dixon–Coles, CPU XGBoost, and a small PyTorch network with team embeddings. It evaluates weighted, logistic, and small meta ensembles plus calibration methods in chronological validation. A complex component reaches the saved recipe only when earlier validation supports it. The current champion manifest is recorded under [`docs/model-manifests`](docs/model-manifests/).
+| Before kickoff | Under the surface |
+| :--- | :--- |
+| **Home / draw / away probabilities** | Compare the likely outcomes rather than showing only one pick. |
+| **Expected goals & score distributions** | Explore how the model distributes probability across possible scores. |
+| **Model comparisons & disagreement** | Inspect how different forecasting approaches view the same match. |
+| **Team context & explanations** | Explore form and the diagnostics available for the saved recipe. |
+| **Saved forecasts & confirmed results** | Keep predictions made before kickoff separate from later outcomes. |
 
-## Architecture
+The dashboard includes a matchday homepage, individual prediction pages, team views, and a research page. It reads stored/provider data; it is not a live score feed. Upcoming predictions require actual scheduled fixtures.
+
+## 02 / The research record
+
+<img src="docs/assets/research-record.svg" alt="Recorded sealed 2025/2026 test results: 380 matches, 1.0303 log loss, 0.6195 Brier score, and 47.37% winner accuracy." width="100%" />
+
+These figures come from the committed [initial champion manifest](docs/model-manifests/64bb78bed878432b.json) and [verification report](docs/verification.md), recorded on **3 October 2026**. They describe a historical run; they are not a claim about current or future performance.
+
+| Evaluation protocol | Matches | Log loss ↓ | Brier score ↓ | Winner accuracy ↑ |
+| :--- | ---: | ---: | ---: | ---: |
+| Sealed 2025/2026 final test | 380 | 1.0303 | 0.6195 | 47.37% |
+| Monthly frozen-recipe walk-forward | 380 | 1.0264 | 0.6172 | 48.16% |
+
+**What those numbers mean:** log loss measures the probabilities assigned to the outcomes that occurred; Brier score measures squared probability error. Accuracy counts how often the highest-probability outcome won. None of these numbers alone establishes superiority over a baseline.
+
+The original [dataset snapshot](docs/dataset-manifest.json) contains **1,570 match records** across **2022/2023–2026/2027**, with the final season partial. New downloads can produce a different snapshot.
+
+<details>
+<summary><strong>Trace the recorded experiment</strong></summary>
+
+| Record | Value |
+| :--- | :--- |
+| Initial champion | `64bb78bed878432b` |
+| Selected recipe | Small meta ensemble |
+| Members | Elo · Poisson · XGBoost · Neural network |
+| Calibration | No transform selected |
+| Test season | 2025/2026 |
+| Compute profile / seed | LIGHT / 42 |
+| Source-archived candidate | `2b56024500ad43a6`; recorded as a candidate, not a replacement champion |
+
+Selection used earlier chronological validation. The final test measured the recipe after selection and did not choose it.
+
+The [delivery verification](docs/verification.md) records the original checks and their date. Its test counts are historical evidence, not a claim that checks were rerun for this README update.
+
+</details>
+
+## 03 / Inside the model room
+
+Start with simple expectations. Add complexity when earlier validation supports it.
+
+| Family | Question it asks | Implementation |
+| :--- | :--- | :--- |
+| **Baselines** | What happens if we favor home advantage or historical frequencies? | [Baseline models](src/football_ai/models/baseline.py) |
+| **Elo** | How strong are the teams relative to each other? | [Rating engine](src/football_ai/features/elo.py) · [Model](src/football_ai/models/elo.py) |
+| **Poisson / Dixon–Coles** | What scorelines follow from estimated scoring rates? | [Goal models](src/football_ai/models/poisson.py) |
+| **XGBoost** | Can nonlinear combinations of pre-match features improve forecasts? | [Boosting model](src/football_ai/models/boosting.py) |
+| **Compact neural network** | Can learned team embeddings capture additional structure? | [Neural model](src/football_ai/models/neural.py) |
+| **Ensembles & calibration** | Does combining or adjusting probabilities help on earlier validation? | [Ensembles](src/football_ai/models/ensemble.py) · [Calibration](src/football_ai/models/calibration.py) |
+
+Weighted, logistic, and small meta ensembles are evaluated. A model being implemented does not mean it belongs to the selected recipe.
+
+## 04 / Time is part of the model
+
+A forecast should only know what was available when it was made.
+
+- **Features before results:** a match outcome enters team state only after its availability cutoff.
+- **Simultaneous fixtures stay together:** they share the same prior information.
+- **Training follows the calendar:** preprocessing, ensemble fitting, calibration, and selection respect temporal boundaries.
+- **The newest complete season stays sealed:** final-test results do not revise the selected recipe.
+- **Forecasts remain immutable:** confirmed outcomes attach separately.
+
+Read the [leakage safeguards](docs/data-leakage.md), [evaluation design](docs/evaluation.md), and [backtesting notes](docs/backtesting.md).
 
 ```mermaid
-flowchart LR
-    A[CSV and optional API providers] --> B[Validation and provenance]
-    B --> C[Versioned datasets]
-    C --> D[Chronological feature engine]
-    D --> E[Elo and Poisson]
-    D --> F[XGBoost and neural network]
-    E --> G[Validation-selected ensemble and calibration]
-    F --> G
-    G --> H[Local model registry]
-    H --> I[FastAPI and immutable forecasts]
-    I --> J[Next.js analytics dashboard]
+flowchart TD
+    A["Real results and fixtures"] --> B["Validate and version data"]
+    B --> C["Replay pre-match features"]
+    C --> D["Statistical models"]
+    C --> E["Boosting and neural models"]
+    D --> F["Chronological recipe selection"]
+    E --> F
+    F --> G["Registry and immutable forecasts"]
+    G --> H["FastAPI and Next.js"]
+    I["Confirmed results"] --> J["Prospective evaluation"]
+    G --> J
 ```
 
-Python packages separate providers, validation, data snapshots, feature replay, models, training, evaluation, persistence, inference, and HTTP contracts. SQLite is the local default; PostgreSQL uses the same SQLAlchemy models and Alembic migrations. MLflow tracking stays local.
+SQLite is the default store. PostgreSQL uses the same SQLAlchemy models and Alembic migrations. Tracking and artifacts stay local.
 
-## Leakage protection
+## 05 / Run the lab
 
-- Each fixture's features are read before its result is applied to team state.
-- Simultaneous fixtures share a feature cutoff and are grouped before any result updates.
-- Historical outcomes become usable only after their documented availability time.
-- Splits are chronological; imputers, scalers, and learned model parameters fit only within each training fold.
-- Ensemble and calibration recipes use separated chronological out-of-fold blocks.
-- The newest complete season is sealed for final measurement and is never used to revise the selected recipe.
+Built for a laptop: **Windows native, CPU first, no GPU required.** The default LIGHT profile uses two training threads, a compact neural model, and FAST optimization.
 
-Details and known assumptions are in [data-leakage.md](docs/data-leakage.md).
-
-## Screenshots
-
-`docs/assets/` is reserved for genuine screenshots captured from the running dashboard. The initial repository keeps live captures out until they can be saved as reviewable image files; no mock dashboard images are presented as screenshots.
-
-## Quick start on Windows
-
-Install Git, [uv](https://docs.astral.sh/uv/getting-started/installation/), and Node.js 20.9 or newer. The bootstrapper can install its own managed Python 3.12 runtime. Then clone your **private** repository and set up the application:
+Install Git, [uv](https://docs.astral.sh/uv/getting-started/installation/), and Node.js 20.9 or newer. Bootstrap can install managed Python 3.12.
 
 ```powershell
-git clone <private-repository-url>
+git clone https://github.com/aeubs66/premer_leage_ai.git
 cd premer_leage_ai
 .\scripts\bootstrap.ps1
 ```
 
-Bootstrap syncs the locked Python and Node dependencies, preserves any existing `.env`, initializes SQLite and migrations, downloads and validates available historical data, prepares features, and checks the local API health endpoint. It does **not** train a model by default. Use `-Train` to train with LIGHT/FAST defaults, or `-SkipData` to install offline. If a provider is unavailable, import a results CSV with the command below. Add a football-data.org token to local `.env` only if you want its optional fixture adapter.
+Bootstrap installs locked dependencies, initializes the database, prepares available historical data, and checks API health. **Training is separate by default.** Use `-Train` to include training or `-SkipData` for offline setup.
 
-Start these in separate PowerShell windows from the repository root:
+Start the API from the repository root:
 
 ```powershell
 .\.venv\Scripts\python.exe -m football_ai api
 ```
+
+Start the dashboard in another terminal:
 
 ```powershell
 cd frontend
 npm run dev
 ```
 
-Open the dashboard at [http://127.0.0.1:3000](http://127.0.0.1:3000). API reference: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs). Both servers bind to loopback by default.
+[Open local dashboard](http://127.0.0.1:3000) · [Open API reference](http://127.0.0.1:8000/docs)
 
-## Common commands
+A fresh clone does not contain trained model binaries or saved predictions. Train locally or restore matching private local state. See the full [Windows setup guide](docs/getting-started.md).
 
-Run `football-ai COMMAND` in an activated environment, or replace it with `python -m football_ai COMMAND`.
+<details>
+<summary><strong>Data, training, and forecasting commands</strong></summary>
+
+Use `football-ai COMMAND` in the activated environment, or `.\.venv\Scripts\python.exe -m football_ai COMMAND` from the root.
 
 | Command | Purpose |
-| --- | --- |
-| `update-data` | Download or import real results and fixtures, version the snapshot, and rebuild features |
-| `update-data --offline` | Reuse cached historical result downloads |
-| `update-data --csv PATH --season 2024/2025` | Import a historical result CSV |
-| `update-data --fixtures PATH` | Import fixtures from a local CSV |
-| `train` | Evaluate recipes chronologically and initialize a model when needed |
-| `retrain` | Evaluate a candidate with the independent champion promotion gate |
-| `evaluate` | Read the saved sealed-test report without selecting a new recipe |
-| `backtest` | Run historical chronological replay for a saved recipe |
-| `predict-upcoming` | Save forecasts only for known future fixtures |
+| :--- | :--- |
+| `update-data` | Update real data, version the snapshot, and rebuild features |
+| `update-data --offline` | Reuse cached historical downloads |
+| `update-data --csv PATH --season 2024/2025` | Import historical result CSV data |
+| `update-data --fixtures PATH` | Import scheduled fixtures |
+| `update-data --api-fixtures` | Use the optional token-authenticated fixture adapter |
+| `train` | Evaluate recipes and initialize a model when needed |
+| `train --no-neural` | Omit the neural learner |
+| `retrain` | Evaluate a candidate through the champion promotion gate |
+| `evaluate` | Read the saved sealed-test report |
+| `backtest` | Replay the saved recipe chronologically |
+| `predict-upcoming` | Save forecasts for known future fixtures |
 | `record-results` | Attach actual outcomes to saved forecasts |
 | `evaluate-predictions` | Evaluate forecasts saved before kickoff |
 | `rollback` | Restore the previous champion pointer |
-| `api` | Start FastAPI on localhost port 8000 |
 
-## Local files and fresh-PC recovery
+A first training run and later candidate promotion have different roles. Consult [reproducibility](docs/reproducibility.md) before comparing runs.
 
-| Local item | Classification | Recreate or transfer |
-| --- | --- | --- |
-| `.env` | **Secret/configuration** | Created from `.env.example`; configure tokens locally. It is never in the archive or Git. |
-| `.venv/` | Regeneratable | `scripts/bootstrap.ps1` or `uv sync --locked` |
-| `frontend/node_modules/`, `frontend/.next/`, caches | Regeneratable | `npm ci --prefix frontend`; build output from `npm run build --prefix frontend` |
-| `data/raw/` | Optional cache | Download again with `football-ai update-data`; original source URLs and checksums are listed in the tracked dataset manifest. |
-| `data/processed/` and feature caches | Regeneratable | `football-ai update-data` |
-| `data/football.db` | **Non-regenerable user state** | Apply migrations and ingest data to rebuild match tables. Stop the API and make a private local backup before moving this database to preserve saved forecasts and results. |
-| `models/` and `models/champion.json` | Optional trained artifacts | Recreate using `football-ai train`. Exact model binaries remain local and are not in Git. |
-| `reports/` | Optional reports | `football-ai evaluate` and `football-ai backtest` |
-| `mlruns/` | Optional local tracking history | New experiments recreate it; machine-specific MLflow artifact paths are not in Git. |
-| `work/`, `logs/`, Python caches | Temporary/regeneratable | Created as needed by the app and tools. |
+</details>
 
-All runtime data and binaries stay ignored. Git tracks compact [dataset provenance](docs/dataset-manifest.json) and [trained model manifests](docs/model-manifests/) instead of CSV files, SQLite databases, model binaries, MLflow storage, or reports. The bootstrap's live download may produce a newer dataset snapshot than the one in those research manifests.
+<details>
+<summary><strong>Moving to another PC: what Git does and does not preserve</strong></summary>
 
-## Hardware profiles and dependencies
+| Local item | Recovery |
+| :--- | :--- |
+| `.env` | Recreate locally from the example; keep tokens private |
+| `.venv/`, `frontend/node_modules/` | Reinstall locked dependencies |
+| `data/raw/` | Download again; provenance is recorded in the dataset manifest |
+| `data/processed/` | Rebuild with the data pipeline |
+| `data/football.db` | Stop the API and back up privately to preserve saved forecasts and results |
+| `models/` | Retrain or privately transfer matching artifacts and champion pointer |
+| `reports/`, `mlruns/` | Preserve privately if you need the exact report and tracking history |
+| `work/`, `logs/`, caches | Temporary or regeneratable |
 
-`LIGHT` is the default and uses two training threads, a compact neural model, and FAST optimization. `STANDARD` increases thread, model, and tuning budgets. `RESEARCH` provides the largest configured budgets; all three retain the same temporal evaluation safeguards. Change the profile in local `.env` or `configs/training.yaml`.
+Git tracks source, configuration examples, dataset provenance, and compact model manifests. It does not carry the database or trained binaries. See [recovery details](docs/reproducibility.md).
 
-The locked project uses Python 3.12, NumPy, Pandas, SciPy, scikit-learn, XGBoost, PyTorch CPU, Optuna, MLflow, FastAPI, SQLAlchemy, Alembic, SQLite (or optional PostgreSQL), Next.js, TypeScript, Tailwind CSS, and Recharts.
+</details>
 
-## Study the project
+## 06 / Explore further
 
-This repository is also an AI engineering learning project. Follow the ordered [study guide](docs/study-guide.md), which links the mathematics to the implementation and practical exercises.
+| Follow the evidence | Follow the implementation |
+| :--- | :--- |
+| [Study guide](docs/study-guide.md) — concepts and exercises | [Feature engine](src/football_ai/features) — historical replay |
+| [Data pipeline](docs/data-pipeline.md) — sources and validation | [Training](src/football_ai/training) — selection and registry |
+| [Calibration](docs/calibration.md) — probability diagnostics | [Inference](src/football_ai/inference) — forecast generation |
+| [Experiments](docs/experiments.md) — research workflow | [Evaluation](src/football_ai/evaluation) — metrics and reports |
+| [Architecture](docs/architecture.md) — boundaries and decisions | [Dashboard](frontend/src) — matchday and research views |
 
-## Limitations and roadmap
+**Current boundaries.** The initial source lacks reliable xG, injuries, lineups, and player form. Historical result-availability times include documented conservative assumptions. Fixture coverage depends on the provider. Richer player data and tactical features remain future possibilities.
 
-The training set is modest for a volatile sport. The initial source does not provide reliable xG, injuries, lineups, or player form, so those signals are absent rather than invented. Some historical availability times are inferred conservatively. Calibration and uncertainty estimates have finite samples and can drift; no method removes match randomness. The default models are CPU-oriented.
+**Independent personal project.** No affiliation with the Premier League or its clubs. This is a football forecasting experiment, not a betting service.
 
-Future work could add richer historical seasons, timestamped xG, player observations, verified injury and lineup information, deeper prospective tracking, a player-form module, and tactical research. Those items are not implemented capabilities.
+[Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [Report an issue](https://github.com/aeubs66/premer_leage_ai/issues)
 
-**This is an educational and research football forecasting project. It does not offer betting advice or betting functionality.**
+---
+
+<p align="center">
+  <em>The score is uncertain. Keep the evidence clear.</em>
+</p>

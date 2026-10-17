@@ -1,9 +1,9 @@
 # Getting started on Windows
 
-Install Git, uv, and Node.js 20.9 or newer. Clone the private repository and run the Windows bootstrap. uv installs a managed Python 3.12 runtime when needed.
+Install Git, uv, and Node.js 20.9 or newer. Clone the repository and run the Windows bootstrap. uv installs a managed Python 3.12 runtime when needed.
 
 ```powershell
-git clone <private-repository-url>
+git clone https://github.com/aeubs66/premer_leage_ai.git
 cd premer_leage_ai
 .\scripts\bootstrap.ps1
 ```
